@@ -29,8 +29,6 @@ def authenticate() -> str:
         timeout=settings.timeout,
     )
 
-    print(response.status_code)
-    print(response.text)
 
     response.raise_for_status()
 
