@@ -19,6 +19,7 @@ def create_failed_logon(timestamp: str) -> Alert:
         event_record_id="1001",
         subject_username=None,
         target_domain=None,
+        member_name=None,
         raw_data={},
     )
 
@@ -60,3 +61,5 @@ def test_ignore_failed_logons_outside_time_window() -> None:
     findings = detector.detect(alerts)
 
     assert findings == []
+
+

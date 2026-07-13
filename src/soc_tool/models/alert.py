@@ -20,6 +20,7 @@ class Alert:
     username: str | None
     source_ip: str | None
     event_record_id: str | None
+    member_name: str | None
     script_block_text: str | None
     subject_username: str | None
     target_domain: str | None
@@ -49,6 +50,7 @@ class Alert:
             script_block_text=event_data.get("scriptBlockText"),
             event_record_id=system_data.get("eventRecordID"),
             subject_username=event_data.get("subjectUserName"),
+            member_name=event_data.get("memberName"),
             target_domain=event_data.get("targetDomainName"),
             raw_data=data,
         )

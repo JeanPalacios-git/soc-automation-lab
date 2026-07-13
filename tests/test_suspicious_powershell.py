@@ -21,6 +21,7 @@ def create_powershell_alert(script_text: str) -> Alert:
         script_block_text=script_text,
         subject_username=None,
         target_domain=None,
+        member_name=None,
         raw_data={},
     )
 
@@ -53,3 +54,5 @@ def test_ignore_benign_powershell() -> None:
     findings = detector.detect([alert])
 
     assert findings == []
+
+

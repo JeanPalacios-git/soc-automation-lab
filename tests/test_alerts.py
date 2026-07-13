@@ -29,6 +29,7 @@ def test_deduplicate_windows_events() -> None:
         script_block_text=None,
         subject_username="Administrator",
         target_domain="SOCLAB",
+        member_name=None,
         event_record_id="17147",
         raw_data={},
     )
@@ -44,6 +45,7 @@ def test_deduplicate_windows_events() -> None:
         script_block_text=None,
         subject_username="Administrator",
         target_domain="SOCLAB",
+        member_name=None,
         event_record_id="17147",
         raw_data={},
     )
@@ -55,3 +57,5 @@ def test_deduplicate_windows_events() -> None:
 
     assert len(alerts) == 1
     assert alerts[0].username == "flower"
+
+

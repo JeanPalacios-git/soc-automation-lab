@@ -19,6 +19,7 @@ def create_alert(event_id: str) -> Alert:
         script_block_text=None,
         subject_username="Administrator",
         target_domain="SOCLAB",
+        member_name=None,
         raw_data={},
     )
 
@@ -48,3 +49,5 @@ def test_ignore_non_account_creation_event() -> None:
     ])
 
     assert findings == []
+
+
