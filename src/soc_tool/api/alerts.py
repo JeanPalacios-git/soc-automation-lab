@@ -61,6 +61,33 @@ class AlertService:
 
         return self._search(query)
 
+    def get_by_event_ids(
+        self,
+        event_ids: list[str],
+        limit: int = 5000,
+    ) -> list[Alert]:
+        """
+        Retrieve Windows alerts matching multiple Event IDs.
+        """
+
+        query = {
+            "size": limit,
+            "query": {
+                "terms": {
+                    "data.win.system.eventID": event_ids,
+                }
+            },
+            "sort": [
+                {
+                    "timestamp": {
+                        "order": "desc",
+                    }
+                }
+            ],
+        }
+
+        return self._search(query)
+
     def _search(self, query: dict) -> list[Alert]:
         """
         Execute an alert search, normalize and deduplicate results.
