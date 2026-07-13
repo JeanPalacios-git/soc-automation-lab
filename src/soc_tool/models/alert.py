@@ -19,6 +19,7 @@ class Alert:
     event_id: str | None
     username: str | None
     source_ip: str | None
+    script_block_text: str | None
     raw_data: dict[str, Any]
 
     @classmethod
@@ -42,5 +43,6 @@ class Alert:
                 event_data.get("ipAddress")
                 or data.get("data", {}).get("srcip")
             ),
+            script_block_text=event_data.get("scriptBlockText"),
             raw_data=data,
         )
