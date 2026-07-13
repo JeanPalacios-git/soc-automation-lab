@@ -65,7 +65,6 @@ def main() -> None:
 
     if not open_findings:
         print("No open findings detected.")
-        return
 
     for detection, count in detection_counts.items():
         print()
@@ -97,4 +96,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 

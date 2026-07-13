@@ -1,8 +1,10 @@
-"""
+﻿"""
 Security alert model.
 """
 
 from dataclasses import dataclass
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from typing import Any
 
 
@@ -26,6 +28,19 @@ class Alert:
     target_domain: str | None
     raw_data: dict[str, Any]
 
+    @property
+    def timestamp_display(self) -> str:
+        """Return the alert timestamp in Costa Rica local time."""
+
+        timestamp = datetime.fromisoformat(self.timestamp)
+
+        local_timestamp = timestamp.astimezone(
+            ZoneInfo("America/Costa_Rica")
+        )
+
+        return local_timestamp.strftime(
+            "%Y-%m-%d %H:%M:%S Costa Rica"
+        )
     @classmethod
     def from_api(cls, data: dict[str, Any]) -> "Alert":
         """

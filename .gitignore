@@ -6,3 +6,7 @@ __pycache__/
 
 soc_findings.db
 soc_analysis_report.html
+build/
+dist/
+*.spec
+*.exe
