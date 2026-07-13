@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOC Analysis Report</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111827;
+            color: #e5e7eb;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+        }
+
+        .generated {
+            color: #9ca3af;
+            margin-bottom: 30px;
+        }
+
+        .summary {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: #1f2937;
+            padding: 20px;
+            border-radius: 8px;
+            flex: 1;
+        }
+
+        .summary-card h2 {
+            margin: 0;
+            font-size: 32px;
+        }
+
+        .summary-card p {
+            color: #9ca3af;
+            margin-bottom: 0;
+        }
+
+        .finding {
+            background: #1f2937;
+            margin-bottom: 20px;
+            padding: 25px;
+            border-radius: 8px;
+        }
+
+        .severity {
+            font-weight: bold;
+        }
+
+        .HIGH {
+            color: #f87171;
+        }
+
+        .MEDIUM {
+            color: #fbbf24;
+        }
+
+        .mitre {
+            color: #60a5fa;
+        }
+
+        .evidence {
+            background: #111827;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        .evidence-item {
+            margin: 5px 0;
+        }
+
+        .label {
+            color: #9ca3af;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <h1>SOC Analysis Report</h1>
+    <p class="generated">
+        Generated at 2026-07-13T10:43:49.759026+00:00
+    </p>
+
+    <div class="summary">
+        <div class="summary-card">
+            <h2>5</h2>
+            <p>Total Findings</p>
+        </div>
+
+        <div class="summary-card">
+            <h2>3</h2>
+            <p>High Severity</p>
+        </div>
+
+        <div class="summary-card">
+            <h2>2</h2>
+            <p>Medium Severity</p>
+        </div>
+    </div>
+
+    
+    <div class="finding">
+        <h2>Possible Brute Force</h2>
+
+        <p>
+            <span class="severity HIGH">
+                HIGH
+            </span>
+            |
+            <span class="mitre">
+                MITRE ATT&CK T1110
+            </span>
+        </p>
+
+        <h3>Description</h3>
+        <p>Repeated failed Windows logon attempts were detected within a short time window.</p>
+
+        <h3>Evidence</h3>
+        <div class="evidence">
+            
+            <div class="evidence-item">
+                <span class="label">source_ip:</span>
+                127.0.0.1
+            </div>
+            
+            <div class="evidence-item">
+                <span class="label">username:</span>
+                Administrator
+            </div>
+            
+            <div class="evidence-item">
+                <span class="label">failed_attempts:</span>
+                6
+            </div>
+            
+            <div class="evidence-item">
+                <span class="label">first_seen:</span>
+                2026-07-13T09:22:42.293+0000
+            </div>
+            
+            <div class="evidence-item">
+                <span class="label">last_seen:</span>
+                2026-07-13T09:22:46.738+0000
+            </div>
+            
+        </div>
+
+        <h3>Recommendation</h3>
+        <p>Investigate the source IP and targeted account for unauthorized authentication attempts.</p>
+    </div>
+    
+    <div class="finding">
+        <h2>Suspicious PowerShell</h2>
+
+        <p>
+            <span class="severity HIGH">
+                HIGH
+            </span>
+            |
+            <span class="mitre">
+                MITRE ATT&CK T1059.001
+            </span>
+        </p>
+
+        <h3>Description</h3>
+        <p>Suspicious PowerShell script block content was detected.</p>
+
+        <h3>Evidence</h3>
+        <div class="evidence">
+            
+            <div class="evidence-item">
+                <span class="label">matched_patterns:</span>
+                [&#39;downloadstring&#39;, &#39;iex&#39;]
+            </div>
+            
+            <div class="evidence-item">
+                <span class="label">script_block_text:</span>
+                Write-Output \&#34;IEX DownloadString SOC-LAB Detection Test\&#34;
+            </div>
+            
+        </div>
+
+        <h3>Recommendation</h3>
+        <p>Review the script content and investigate the host for malicious PowerShell activity.</p>
+    </div>
+    
+    <div class="finding">
+        <h2>User Account Created</h2>
+
+        <p>
+            <span class="severity MEDIUM">
+                MEDIUM
+            </span>
+            |
+            <span class="mitre">
+                MITRE ATT&CK T1136.002
+            </span>
+        </p>
+
+        <h3>Description</h3>
+        <p>A Windows domain user account was created.</p>
+
+        <h3>Evidence</h3>
+        <div class="evidence">
+            
+            <div class="evidence-item">
+                <span class="label">created_user:</span>
+                soctest
+            </div>
+            
+            <div class="evidence-item">
+                <span class="label">created_by:</span>
+                Administrator
+            </div>
+            
+            <div class="evidence-item">
+                <span class="label">target_domain:</span>
+                SOCLAB
+            </div>
+            
+        </div>
+
+        <h3>Recommendation</h3>
+        <p>Verify that the account creation was authorized and review the creator and assigned privileges.</p>
+    </div>
+    
+    <div class="finding">
+        <h2>User Account Created</h2>
+
+        <p>
+            <span class="severity MEDIUM">
+                MEDIUM
+            </span>
+            |
+            <span class="mitre">
+                MITRE ATT&CK T1136.002
+            </span>
+        </p>
+
+        <h3>Description</h3>
+        <p>A Windows domain user account was created.</p>
+
+        <h3>Evidence</h3>
+        <div class="evidence">
+            
+            <div class="evidence-item">
+                <span class="label">created_user:</span>
+                flower
+            </div>
+            
+            <div class="evidence-item">
+                <span class="label">created_by:</span>
+                Administrator
+            </div>
+            
+            <div class="evidence-item">
+                <span class="label">target_domain:</span>
+                SOCLAB
+            </div>
+            
+        </div>
+
+        <h3>Recommendation</h3>
+        <p>Verify that the account creation was authorized and review the creator and assigned privileges.</p>
+    </div>
+    
+    <div class="finding">
+        <h2>Privileged Group Membership Changed</h2>
+
+        <p>
+            <span class="severity HIGH">
+                HIGH
+            </span>
+            |
+            <span class="mitre">
+                MITRE ATT&CK T1098.007
+            </span>
+        </p>
+
+        <h3>Description</h3>
+        <p>A user was added to a privileged Active Directory group.</p>
+
+        <h3>Evidence</h3>
+        <div class="evidence">
+            
+            <div class="evidence-item">
+                <span class="label">group_name:</span>
+                Domain Admins
+            </div>
+            
+            <div class="evidence-item">
+                <span class="label">member_name:</span>
+                CN=SOC Test User,OU=Employees,DC=soclab,DC=local
+            </div>
+            
+            <div class="evidence-item">
+                <span class="label">changed_by:</span>
+                Administrator
+            </div>
+            
+            <div class="evidence-item">
+                <span class="label">target_domain:</span>
+                SOCLAB
+            </div>
+            
+        </div>
+
+        <h3>Recommendation</h3>
+        <p>Verify that the group membership change was authorized and investigate possible privilege escalation.</p>
+    </div>
+    
+
+</div>
+</body>
+</html>
