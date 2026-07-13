@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -105,6 +105,36 @@
             color: #9ca3af;
         }
 
+        .sort-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #1f2937;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .sort-controls label {
+            color: #9ca3af;
+            font-weight: bold;
+        }
+
+        .sort-controls select,
+        .sort-controls button {
+            background: #111827;
+            color: #e5e7eb;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .sort-controls select:hover,
+        .sort-controls button:hover {
+            border-color: #60a5fa;
+        }
+
         .triage {
             margin-top: 25px;
             padding-top: 20px;
@@ -201,6 +231,23 @@
         </p>
     </div>
 
+    <div class="sort-controls">
+        <label for="finding-sort">Sort findings by:</label>
+
+        <select id="finding-sort">
+            <option value="default">Default order</option>
+            <option value="severity">Severity</option>
+            <option value="agent">Agent</option>
+            <option value="title">Finding name</option>
+            <option value="time">Event time</option>
+        </select>
+
+        <button id="sort-direction" type="button">
+            Descending
+        </button>
+    </div>
+
+    <div id="findings-container">
     {% for finding in report.findings %}
     <div class="finding">
         <h2>{{ finding.title }}</h2>
@@ -296,6 +343,116 @@
         </form>
     </div>
     {% endfor %}
+    </div>
+
+<script>
+    const sortSelect = document.getElementById("finding-sort");
+    const directionButton = document.getElementById("sort-direction");
+    const findingsContainer = document.getElementById("findings-container");
+
+    let descending = true;
+
+    const severityRank = {
+        "CRITICAL": 4,
+        "HIGH": 3,
+        "MEDIUM": 2,
+        "LOW": 1
+    };
+
+    function getFindingData(finding) {
+        const severity =
+            finding.querySelector(".severity")?.textContent.trim() || "";
+
+        const agent =
+            finding.querySelector(".agent")?.textContent
+                .replace("Agent:", "")
+                .trim() || "";
+
+        const title =
+            finding.querySelector("h2")?.textContent.trim() || "";
+
+        const text = finding.textContent;
+
+        const timeMatch = text.match(
+            /Event Time:\s*(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/
+        );
+
+        const time = timeMatch
+            ? new Date(timeMatch[1].replace(" ", "T")).getTime()
+            : 0;
+
+        return {
+            severity,
+            agent,
+            title,
+            time
+        };
+    }
+
+    function sortFindings() {
+        const sortBy = sortSelect.value;
+
+        const findings = Array.from(
+            findingsContainer.querySelectorAll(".finding")
+        );
+
+        if (sortBy === "default") {
+            findings.sort(
+                (a, b) =>
+                    Number(a.dataset.originalOrder) -
+                    Number(b.dataset.originalOrder)
+            );
+        } else {
+            findings.sort((a, b) => {
+                const aData = getFindingData(a);
+                const bData = getFindingData(b);
+
+                let comparison = 0;
+
+                if (sortBy === "severity") {
+                    comparison =
+                        (severityRank[aData.severity] || 0) -
+                        (severityRank[bData.severity] || 0);
+                }
+
+                if (sortBy === "agent") {
+                    comparison = aData.agent.localeCompare(bData.agent);
+                }
+
+                if (sortBy === "title") {
+                    comparison = aData.title.localeCompare(bData.title);
+                }
+
+                if (sortBy === "time") {
+                    comparison = aData.time - bData.time;
+                }
+
+                return descending ? -comparison : comparison;
+            });
+        }
+
+        findings.forEach(
+            finding => findingsContainer.appendChild(finding)
+        );
+    }
+
+    document
+        .querySelectorAll("#findings-container .finding")
+        .forEach((finding, index) => {
+            finding.dataset.originalOrder = index;
+        });
+
+    sortSelect.addEventListener("change", sortFindings);
+
+    directionButton.addEventListener("click", () => {
+        descending = !descending;
+
+        directionButton.textContent =
+            descending ? "Descending" : "Ascending";
+
+        sortFindings();
+    });
+</script>
 
 </div>
 </body>
