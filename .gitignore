@@ -1,21 +1,8 @@
-# Virtual environment
 .venv/
-
-# Environment variables
+__pycache__/
+*.pyc
+.pytest_cache/
 .env
 
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-
-# VS Code
-.vscode/
-
-# OS
-Thumbs.db
-.DS_Store
-
-# Generated reports
-sample_reports/
+soc_findings.db
+soc_analysis_report.html

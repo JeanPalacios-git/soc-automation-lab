@@ -1,16 +1,18 @@
-"""
+﻿"""
 Run the SOC analysis engine against real Wazuh alerts.
 """
 
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from soc_tool.api.alerts import AlertService
 from soc_tool.detections.account_creation import AccountCreationDetector
 from soc_tool.detections.brute_force import BruteForceDetector
 from soc_tool.detections.engine import AnalysisEngine
 from soc_tool.detections.group_membership import GroupMembershipDetector
+from soc_tool.detections.persistence import FindingStore
 from soc_tool.detections.suspicious_powershell import (
     SuspiciousPowerShellDetector,
 )
@@ -42,17 +44,27 @@ def main() -> None:
 
     findings = engine.analyze(alerts)
 
+    store = FindingStore(
+        Path("soc_findings.db")
+    )
+
+    store.sync(findings)
+
+    open_findings = store.get_open_findings(findings)
+
     detection_counts = Counter(
         finding.title
-        for finding in findings
+        for finding in open_findings
     )
 
     print(f"Alerts retrieved: {len(alerts)}")
+    print(f"Findings detected: {len(findings)}")
+    print(f"Open findings: {len(open_findings)}")
     print()
     print("=== ANALYSIS RESULTS ===")
 
-    if not findings:
-        print("No findings detected.")
+    if not open_findings:
+        print("No open findings detected.")
         return
 
     for detection, count in detection_counts.items():
@@ -61,12 +73,17 @@ def main() -> None:
         print(f"Findings: {count}")
 
     print()
-    print(f"Total findings: {len(findings)}")
+    print(f"Total open findings: {len(open_findings)}")
+
+    costa_rica = timezone(
+        timedelta(hours=-6),
+        name="Costa Rica",
+    )
 
     report = Report(
         title="SOC Analysis Report",
-        generated_at=datetime.now(timezone.utc).isoformat(),
-        findings=findings,
+        generated_at=datetime.now(costa_rica).isoformat(),
+        findings=open_findings,
     )
 
     output_path = Path("soc_analysis_report.html")
@@ -80,3 +97,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

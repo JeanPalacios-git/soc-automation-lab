@@ -54,3 +54,17 @@ def test_ignore_benign_powershell() -> None:
     findings = detector.detect([alert])
 
     assert findings == []
+
+def test_ignore_single_invoke_expression_pattern() -> None:
+    alert = create_alert(
+        script_block_text=(
+            '$activateScript = "Activate.ps1"; '
+            'Invoke-Expression $activateScript'
+        )
+    )
+
+    detector = SuspiciousPowerShellDetector()
+
+    findings = detector.detect([alert])
+
+    assert findings == []

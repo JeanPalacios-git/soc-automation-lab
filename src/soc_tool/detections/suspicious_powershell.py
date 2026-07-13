@@ -11,18 +11,20 @@ class SuspiciousPowerShellDetector:
     Detect suspicious PowerShell script block content.
     """
 
-    SUSPICIOUS_PATTERNS = (
+    HIGH_CONFIDENCE_PATTERNS = (
         "encodedcommand",
-        "-enc",
-        "invoke-webrequest",
         "downloadstring",
+    )
+
+    SUPPORTING_PATTERNS = (
+        "invoke-webrequest",
         "invoke-expression",
         "iex",
     )
 
     def detect(self, alerts: list[Alert]) -> list[Finding]:
         """
-        Detect suspicious patterns in PowerShell 4104 events.
+        Detect suspicious PowerShell 4104 script block content.
         """
 
         findings = []
@@ -36,14 +38,30 @@ class SuspiciousPowerShellDetector:
 
             script_text = alert.script_block_text.lower()
 
-            matched_patterns = [
+            high_confidence_matches = [
                 pattern
-                for pattern in self.SUSPICIOUS_PATTERNS
+                for pattern in self.HIGH_CONFIDENCE_PATTERNS
                 if pattern in script_text
             ]
 
-            if not matched_patterns:
+            supporting_matches = [
+                pattern
+                for pattern in self.SUPPORTING_PATTERNS
+                if pattern in script_text
+            ]
+
+            is_suspicious = (
+                bool(high_confidence_matches)
+                or len(supporting_matches) >= 2
+            )
+
+            if not is_suspicious:
                 continue
+
+            matched_patterns = (
+                high_confidence_matches
+                + supporting_matches
+            )
 
             findings.append(
                 Finding(

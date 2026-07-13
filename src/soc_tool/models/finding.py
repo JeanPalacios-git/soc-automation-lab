@@ -1,3 +1,9 @@
+"""
+Finding model.
+"""
+
+import hashlib
+import json
 from dataclasses import dataclass
 from typing import Any
 
@@ -15,3 +21,33 @@ class Finding:
     recommendation: str
     evidence: dict[str, Any]
     related_alerts: list
+
+    @property
+    def fingerprint(self) -> str:
+        """
+        Generate a deterministic identifier for this finding.
+        """
+
+        alert_ids = sorted(
+            (
+                alert.agent_name,
+                alert.event_record_id,
+            )
+            for alert in self.related_alerts
+        )
+
+        fingerprint_data = {
+            "title": self.title,
+            "alerts": alert_ids,
+            "evidence": self.evidence,
+        }
+
+        serialized = json.dumps(
+            fingerprint_data,
+            sort_keys=True,
+            default=str,
+        )
+
+        return hashlib.sha256(
+            serialized.encode("utf-8")
+        ).hexdigest()

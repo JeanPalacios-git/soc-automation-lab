@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -23,8 +23,12 @@
             margin-bottom: 5px;
         }
 
-        .generated {
+        .generated,
+        .agent {
             color: #9ca3af;
+        }
+
+        .generated {
             margin-bottom: 30px;
         }
 
@@ -34,10 +38,15 @@
             margin-bottom: 30px;
         }
 
-        .summary-card {
+        .summary-card,
+        .executive-summary,
+        .finding {
             background: #1f2937;
-            padding: 20px;
             border-radius: 8px;
+        }
+
+        .summary-card {
+            padding: 20px;
             flex: 1;
         }
 
@@ -51,11 +60,14 @@
             margin-bottom: 0;
         }
 
+        .executive-summary {
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
         .finding {
-            background: #1f2937;
             margin-bottom: 20px;
             padding: 25px;
-            border-radius: 8px;
         }
 
         .severity {
@@ -72,6 +84,11 @@
 
         .mitre {
             color: #60a5fa;
+            text-decoration: none;
+        }
+
+        .mitre:hover {
+            text-decoration: underline;
         }
 
         .evidence {
@@ -87,6 +104,51 @@
         .label {
             color: #9ca3af;
         }
+
+        .triage {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #374151;
+        }
+
+        .triage textarea {
+            width: 100%;
+            box-sizing: border-box;
+            background: #111827;
+            color: #e5e7eb;
+            border: 1px solid #4b5563;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+            resize: vertical;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 6px;
+            padding: 10px 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .resolve {
+            background: #10b981;
+            color: #ffffff;
+        }
+
+        .false-positive {
+            background: #f59e0b;
+            color: #111827;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
     </style>
 </head>
 
@@ -94,14 +156,15 @@
 <div class="container">
 
     <h1>{{ report.title }}</h1>
+
     <p class="generated">
-        Generated at {{ report.generated_at }}
+        Generated at {{ report.generated_at_display }}
     </p>
 
     <div class="summary">
         <div class="summary-card">
             <h2>{{ report.total_findings }}</h2>
-            <p>Total Findings</p>
+            <p>Open Findings</p>
         </div>
 
         <div class="summary-card">
@@ -115,6 +178,29 @@
         </div>
     </div>
 
+    <div class="executive-summary">
+        <h2>Executive Summary</h2>
+
+        <p>
+            The analysis engine identified
+            <strong>{{ report.total_findings }} open security findings</strong>,
+            including
+            <strong>{{ report.high_findings }} high-severity findings</strong>
+            and
+            <strong>{{ report.medium_findings }} medium-severity findings</strong>.
+        </p>
+
+        <p>
+            Affected agents:
+            <strong>{{ report.affected_agents | join(", ") }}</strong>
+        </p>
+
+        <p>
+            High-severity findings should be prioritized for investigation
+            and validated against authorized administrative activity.
+        </p>
+    </div>
+
     {% for finding in report.findings %}
     <div class="finding">
         <h2>{{ finding.title }}</h2>
@@ -124,15 +210,39 @@
                 {{ finding.severity }}
             </span>
             |
-            <span class="mitre">
+
+            <a
+                class="mitre"
+                href="https://attack.mitre.org/techniques/{{ finding.mitre_id | replace('.', '/') }}/"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
                 MITRE ATT&CK {{ finding.mitre_id }}
-            </span>
+            </a>
         </p>
+
+        {% if finding.related_alerts %}
+        <div class="agent">
+            <p>
+                Agent: {{ finding.related_alerts[0].agent_name }}
+            </p>
+
+            <p>
+                Event Time: {{ finding.related_alerts[0].timestamp }}
+            </p>
+
+            <p>
+                Event Record ID:
+                {{ finding.related_alerts[0].event_record_id or "N/A" }}
+            </p>
+        </div>
+        {% endif %}
 
         <h3>Description</h3>
         <p>{{ finding.description }}</p>
 
         <h3>Evidence</h3>
+
         <div class="evidence">
             {% for key, value in finding.evidence.items() %}
             <div class="evidence-item">
@@ -144,9 +254,50 @@
 
         <h3>Recommendation</h3>
         <p>{{ finding.recommendation }}</p>
+
+        <form
+            class="triage"
+            method="post"
+            action="/finding/update"
+        >
+            <input
+                type="hidden"
+                name="fingerprint"
+                value="{{ finding.fingerprint }}"
+            >
+
+            <h3>Analyst Triage</h3>
+
+            <textarea
+                name="analyst_note"
+                rows="3"
+                placeholder="Analyst note..."
+            ></textarea>
+
+            <div class="actions">
+                <button
+                    class="resolve"
+                    type="submit"
+                    name="status"
+                    value="RESOLVED"
+                >
+                    Resolve
+                </button>
+
+                <button
+                    class="false-positive"
+                    type="submit"
+                    name="status"
+                    value="FALSE_POSITIVE"
+                >
+                    False Positive
+                </button>
+            </div>
+        </form>
     </div>
     {% endfor %}
 
 </div>
 </body>
 </html>
+
