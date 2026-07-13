@@ -1,12 +1,12 @@
 """
-Alert model.
+Security alert model.
 """
 
 from dataclasses import dataclass
 from typing import Any
 
 
-@dataclass(slots=True)
+@dataclass
 class Alert:
     """
     Represents a normalized security alert retrieved from Wazuh.
@@ -24,22 +24,23 @@ class Alert:
     @classmethod
     def from_api(cls, data: dict[str, Any]) -> "Alert":
         """
-        Create an Alert instance from a Wazuh API response.
+        Create an Alert instance from a Wazuh alert document.
         """
 
-        agent = data.get("agent", {})
-        rule = data.get("rule", {})
-        win = data.get("data", {}).get("win", {})
-        system = win.get("system", {})
-        eventdata = win.get("eventdata", {})
+        win_data = data.get("data", {}).get("win", {})
+        event_data = win_data.get("eventdata", {})
+        system_data = win_data.get("system", {})
 
         return cls(
             timestamp=data.get("timestamp", ""),
-            agent_name=agent.get("name", "Unknown"),
-            rule_id=str(rule.get("id", "")),
-            rule_level=int(rule.get("level", 0)),
-            event_id=system.get("eventID"),
-            username=eventdata.get("targetUserName"),
-            source_ip=data.get("data", {}).get("srcip"),
+            agent_name=data.get("agent", {}).get("name", "Unknown"),
+            rule_id=str(data.get("rule", {}).get("id", "")),
+            rule_level=int(data.get("rule", {}).get("level", 0)),
+            event_id=system_data.get("eventID"),
+            username=event_data.get("targetUserName"),
+            source_ip=(
+                event_data.get("ipAddress")
+                or data.get("data", {}).get("srcip")
+            ),
             raw_data=data,
         )

@@ -14,10 +14,6 @@ class AlertService:
     """
 
     def __init__(self) -> None:
-        """
-        Create a new alert service.
-        """
-
         self.indexer = WazuhIndexer()
 
     def get_recent(self, limit: int = 100) -> list[Alert]:
@@ -36,11 +32,43 @@ class AlertService:
             ],
         }
 
-        response = self.indexer.search_alerts(query)
+        return self._search(query)
 
-        hits = response["hits"]["hits"]
+    def get_by_event_id(
+        self,
+        event_id: str,
+        limit: int = 100,
+    ) -> list[Alert]:
+        """
+        Retrieve Windows alerts matching an Event ID.
+        """
+
+        query = {
+            "size": limit,
+            "query": {
+                "term": {
+                    "data.win.system.eventID": event_id,
+                }
+            },
+            "sort": [
+                {
+                    "timestamp": {
+                        "order": "desc",
+                    }
+                }
+            ],
+        }
+
+        return self._search(query)
+
+    def _search(self, query: dict) -> list[Alert]:
+        """
+        Execute an alert search and normalize the results.
+        """
+
+        response = self.indexer.search_alerts(query)
 
         return [
             Alert.from_api(hit["_source"])
-            for hit in hits
+            for hit in response["hits"]["hits"]
         ]
