@@ -1,4 +1,4 @@
-"""
+﻿"""
 Brute force detection logic.
 """
 
@@ -11,98 +11,98 @@ from soc_tool.models.finding import Finding
 
 class BruteForceDetector:
     """
-    Detects repeated failed Windows logon attempts.
+    Detect repeated failed logon attempts within a time window.
     """
 
-    def __init__(
-        self,
-        threshold: int = 5,
-        window_minutes: int = 5,
-    ) -> None:
-        self.threshold = threshold
-        self.window = timedelta(minutes=window_minutes)
+    FAILED_LOGON_EVENT_ID = "4625"
+    ATTEMPT_THRESHOLD = 5
+    TIME_WINDOW = timedelta(minutes=5)
 
     def detect(self, alerts: list[Alert]) -> list[Finding]:
         """
-        Detect repeated failed logons within a time window.
+        Detect independent brute force campaigns.
         """
 
-        failed_logons: dict[
-            tuple[str, str],
-            list[Alert],
-        ] = defaultdict(list)
+        grouped_alerts = defaultdict(list)
 
         for alert in alerts:
-            if alert.event_id != "4625":
+            if alert.event_id != self.FAILED_LOGON_EVENT_ID:
                 continue
 
-            source_ip = alert.source_ip or "Unknown"
-            username = alert.username or "Unknown"
+            if not alert.source_ip or not alert.username:
+                continue
 
-            key = (source_ip, username)
-            failed_logons[key].append(alert)
+            key = (
+                alert.source_ip,
+                alert.username,
+            )
+
+            grouped_alerts[key].append(alert)
 
         findings = []
 
-        for (source_ip, username), matched_alerts in failed_logons.items():
-            sorted_alerts = sorted(
-                matched_alerts,
-                key=lambda alert: self._parse_timestamp(alert.timestamp),
+        for (source_ip, username), group in grouped_alerts.items():
+            ordered_alerts = sorted(
+                group,
+                key=lambda alert: datetime.fromisoformat(
+                    alert.timestamp
+                ),
             )
 
-            for start_index, start_alert in enumerate(sorted_alerts):
-                window_alerts = []
+            start_index = 0
 
-                start_time = self._parse_timestamp(
-                    start_alert.timestamp
+            while start_index < len(ordered_alerts):
+                campaign_start = datetime.fromisoformat(
+                    ordered_alerts[start_index].timestamp
                 )
 
-                for alert in sorted_alerts[start_index:]:
-                    alert_time = self._parse_timestamp(
+                campaign_alerts = []
+
+                for alert in ordered_alerts[start_index:]:
+                    alert_time = datetime.fromisoformat(
                         alert.timestamp
                     )
 
-                    if alert_time - start_time > self.window:
+                    if alert_time - campaign_start > self.TIME_WINDOW:
                         break
 
-                    window_alerts.append(alert)
+                    campaign_alerts.append(alert)
 
-                if len(window_alerts) >= self.threshold:
+                if len(campaign_alerts) >= self.ATTEMPT_THRESHOLD:
+                    triggering_alerts = campaign_alerts[
+                        : self.ATTEMPT_THRESHOLD
+                    ]
+
+                    first_seen = triggering_alerts[0].timestamp
+                    last_seen = triggering_alerts[-1].timestamp
+
                     findings.append(
                         Finding(
                             title="Possible Brute Force",
                             severity="HIGH",
                             mitre_id="T1110",
                             description=(
-                                "Repeated failed Windows logon attempts "
-                                "were detected within a short time window."
+                                "Multiple failed logon attempts were "
+                                "detected within a short time window."
                             ),
                             recommendation=(
-                                "Investigate the source IP and targeted "
-                                "account for unauthorized authentication attempts."
+                                "Investigate the source IP and target "
+                                "account for possible brute force activity."
                             ),
                             evidence={
                                 "source_ip": source_ip,
                                 "username": username,
-                                "failed_attempts": len(window_alerts),
-                                "first_seen": window_alerts[0].timestamp,
-                                "last_seen": window_alerts[-1].timestamp,
+                                "failed_attempts": len(triggering_alerts),
+                                "first_seen": first_seen,
+                                "last_seen": last_seen,
                             },
-                            related_alerts=window_alerts,
+                            related_alerts=triggering_alerts,
                         )
                     )
 
-                    break
+                    start_index += len(campaign_alerts)
+                    continue
+
+                start_index += 1
 
         return findings
-
-    @staticmethod
-    def _parse_timestamp(timestamp: str) -> datetime:
-        """
-        Convert a Wazuh timestamp into a datetime object.
-        """
-
-        return datetime.strptime(
-            timestamp,
-            "%Y-%m-%dT%H:%M:%S.%f%z",
-        )
