@@ -3,6 +3,8 @@ Run the SOC analysis engine against real Wazuh alerts.
 """
 
 from collections import Counter
+from datetime import datetime, timezone
+from pathlib import Path
 
 from soc_tool.api.alerts import AlertService
 from soc_tool.detections.account_creation import AccountCreationDetector
@@ -12,6 +14,8 @@ from soc_tool.detections.group_membership import GroupMembershipDetector
 from soc_tool.detections.suspicious_powershell import (
     SuspiciousPowerShellDetector,
 )
+from soc_tool.models.report import Report
+from soc_tool.reports.generator import ReportGenerator
 
 
 def main() -> None:
@@ -58,6 +62,20 @@ def main() -> None:
 
     print()
     print(f"Total findings: {len(findings)}")
+
+    report = Report(
+        title="SOC Analysis Report",
+        generated_at=datetime.now(timezone.utc).isoformat(),
+        findings=findings,
+    )
+
+    output_path = Path("soc_analysis_report.html")
+
+    generator = ReportGenerator()
+    generator.generate_html(report, output_path)
+
+    print()
+    print(f"HTML report generated: {output_path}")
 
 
 if __name__ == "__main__":
