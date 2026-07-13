@@ -5,6 +5,7 @@ Coordinates multiple detectors against normalized Wazuh alerts.
 """
 
 from soc_tool.models.alert import Alert
+from soc_tool.models.finding import Finding
 
 
 class AnalysisEngine:
@@ -13,7 +14,7 @@ class AnalysisEngine:
     def __init__(self, detectors: list) -> None:
         self.detectors = detectors
 
-    def analyze(self, alerts: list[Alert]) -> list[dict]:
+    def analyze(self, alerts: list[Alert]) -> list[Finding]:
         """Run all configured detectors and combine their findings."""
 
         findings = []

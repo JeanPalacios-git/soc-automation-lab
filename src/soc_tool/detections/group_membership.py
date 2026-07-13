@@ -3,6 +3,7 @@ Detect additions to privileged Active Directory groups.
 """
 
 from soc_tool.models.alert import Alert
+from soc_tool.models.finding import Finding
 
 
 class GroupMembershipDetector:
@@ -15,7 +16,7 @@ class GroupMembershipDetector:
         "administrators",
     }
 
-    def detect(self, alerts: list[Alert]) -> list[dict]:
+    def detect(self, alerts: list[Alert]) -> list[Finding]:
         findings = []
 
         for alert in alerts:
@@ -31,15 +32,26 @@ class GroupMembershipDetector:
                 continue
 
             findings.append(
-                {
-                    "detection": "Privileged Group Membership Changed",
-                    "agent_name": alert.agent_name,
-                    "group_name": group_name,
-                    "member_name": alert.member_name,
-                    "changed_by": alert.subject_username,
-                    "target_domain": alert.target_domain,
-                    "timestamp": alert.timestamp,
-                }
+                Finding(
+                    title="Privileged Group Membership Changed",
+                    severity="HIGH",
+                    mitre_id="T1098.007",
+                    description=(
+                        "A user was added to a privileged Active "
+                        "Directory group."
+                    ),
+                    recommendation=(
+                        "Verify that the group membership change was "
+                        "authorized and investigate possible privilege escalation."
+                    ),
+                    evidence={
+                        "group_name": group_name,
+                        "member_name": alert.member_name,
+                        "changed_by": alert.subject_username,
+                        "target_domain": alert.target_domain,
+                    },
+                    related_alerts=[alert],
+                )
             )
 
         return findings

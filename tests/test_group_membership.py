@@ -35,10 +35,12 @@ def test_detect_privileged_group_membership_change() -> None:
 
     finding = findings[0]
 
-    assert finding["detection"] == "Privileged Group Membership Changed"
-    assert finding["group_name"] == "Domain Admins"
-    assert "SOC Test User" in finding["member_name"]
-    assert finding["changed_by"] == "Administrator"
+    assert finding.title == "Privileged Group Membership Changed"
+    assert finding.severity == "HIGH"
+    assert finding.mitre_id == "T1098.007"
+    assert finding.evidence["group_name"] == "Domain Admins"
+    assert "SOC Test User" in finding.evidence["member_name"]
+    assert finding.evidence["changed_by"] == "Administrator"
 
 
 def test_ignore_non_privileged_group() -> None:

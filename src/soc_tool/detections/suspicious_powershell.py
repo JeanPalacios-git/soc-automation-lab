@@ -3,6 +3,7 @@ Suspicious PowerShell detection logic.
 """
 
 from soc_tool.models.alert import Alert
+from soc_tool.models.finding import Finding
 
 
 class SuspiciousPowerShellDetector:
@@ -19,7 +20,7 @@ class SuspiciousPowerShellDetector:
         "iex",
     )
 
-    def detect(self, alerts: list[Alert]) -> list[dict]:
+    def detect(self, alerts: list[Alert]) -> list[Finding]:
         """
         Detect suspicious patterns in PowerShell 4104 events.
         """
@@ -45,13 +46,24 @@ class SuspiciousPowerShellDetector:
                 continue
 
             findings.append(
-                {
-                    "detection": "Suspicious PowerShell",
-                    "agent_name": alert.agent_name,
-                    "matched_patterns": matched_patterns,
-                    "script_block_text": alert.script_block_text,
-                    "timestamp": alert.timestamp,
-                }
+                Finding(
+                    title="Suspicious PowerShell",
+                    severity="HIGH",
+                    mitre_id="T1059.001",
+                    description=(
+                        "Suspicious PowerShell script block content "
+                        "was detected."
+                    ),
+                    recommendation=(
+                        "Review the script content and investigate the "
+                        "host for malicious PowerShell activity."
+                    ),
+                    evidence={
+                        "matched_patterns": matched_patterns,
+                        "script_block_text": alert.script_block_text,
+                    },
+                    related_alerts=[alert],
+                )
             )
 
         return findings

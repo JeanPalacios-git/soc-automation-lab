@@ -6,6 +6,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 
 from soc_tool.models.alert import Alert
+from soc_tool.models.finding import Finding
 
 
 class BruteForceDetector:
@@ -21,7 +22,7 @@ class BruteForceDetector:
         self.threshold = threshold
         self.window = timedelta(minutes=window_minutes)
 
-    def detect(self, alerts: list[Alert]) -> list[dict]:
+    def detect(self, alerts: list[Alert]) -> list[Finding]:
         """
         Detect repeated failed logons within a time window.
         """
@@ -39,7 +40,6 @@ class BruteForceDetector:
             username = alert.username or "Unknown"
 
             key = (source_ip, username)
-
             failed_logons[key].append(alert)
 
         findings = []
@@ -69,14 +69,27 @@ class BruteForceDetector:
 
                 if len(window_alerts) >= self.threshold:
                     findings.append(
-                        {
-                            "detection": "Possible Brute Force",
-                            "source_ip": source_ip,
-                            "username": username,
-                            "failed_attempts": len(window_alerts),
-                            "first_seen": window_alerts[0].timestamp,
-                            "last_seen": window_alerts[-1].timestamp,
-                        }
+                        Finding(
+                            title="Possible Brute Force",
+                            severity="HIGH",
+                            mitre_id="T1110",
+                            description=(
+                                "Repeated failed Windows logon attempts "
+                                "were detected within a short time window."
+                            ),
+                            recommendation=(
+                                "Investigate the source IP and targeted "
+                                "account for unauthorized authentication attempts."
+                            ),
+                            evidence={
+                                "source_ip": source_ip,
+                                "username": username,
+                                "failed_attempts": len(window_alerts),
+                                "first_seen": window_alerts[0].timestamp,
+                                "last_seen": window_alerts[-1].timestamp,
+                            },
+                            related_alerts=window_alerts,
+                        )
                     )
 
                     break

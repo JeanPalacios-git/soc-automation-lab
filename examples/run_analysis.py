@@ -39,7 +39,7 @@ def main() -> None:
     findings = engine.analyze(alerts)
 
     detection_counts = Counter(
-        finding["detection"]
+        finding.title
         for finding in findings
     )
 

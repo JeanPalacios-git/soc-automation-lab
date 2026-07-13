@@ -8,18 +8,18 @@ from soc_tool.models.alert import Alert
 
 def create_alert(event_id: str) -> Alert:
     return Alert(
-        timestamp="2026-07-05T07:56:01.892+0000",
+        timestamp="2026-07-01T10:00:00.000+0000",
         agent_name="DC01",
-        rule_id="60109",
-        rule_level=8,
+        rule_id="60143",
+        rule_level=5,
         event_id=event_id,
         username="soctest",
         source_ip=None,
-        event_record_id="3001",
         script_block_text=None,
         subject_username="Administrator",
         target_domain="SOCLAB",
         member_name=None,
+        event_record_id="17147",
         raw_data={},
     )
 
@@ -35,10 +35,12 @@ def test_detect_account_creation() -> None:
 
     finding = findings[0]
 
-    assert finding["detection"] == "User Account Created"
-    assert finding["created_user"] == "soctest"
-    assert finding["created_by"] == "Administrator"
-    assert finding["target_domain"] == "SOCLAB"
+    assert finding.title == "User Account Created"
+    assert finding.severity == "MEDIUM"
+    assert finding.mitre_id == "T1136.002"
+    assert finding.evidence["created_user"] == "soctest"
+    assert finding.evidence["created_by"] == "Administrator"
+    assert finding.evidence["target_domain"] == "SOCLAB"
 
 
 def test_ignore_non_account_creation_event() -> None:
@@ -49,5 +51,3 @@ def test_ignore_non_account_creation_event() -> None:
     ])
 
     assert findings == []
-
-
