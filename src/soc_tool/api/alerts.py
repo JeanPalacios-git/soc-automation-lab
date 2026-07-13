@@ -63,12 +63,41 @@ class AlertService:
 
     def _search(self, query: dict) -> list[Alert]:
         """
-        Execute an alert search and normalize the results.
+        Execute an alert search, normalize and deduplicate results.
         """
 
         response = self.indexer.search_alerts(query)
 
-        return [
+        alerts = [
             Alert.from_api(hit["_source"])
             for hit in response["hits"]["hits"]
         ]
+
+        return self._deduplicate(alerts)
+
+    @staticmethod
+    def _deduplicate(alerts: list[Alert]) -> list[Alert]:
+        """
+        Remove duplicate Windows events.
+        """
+
+        unique_alerts = []
+        seen_events = set()
+
+        for alert in alerts:
+            if alert.event_record_id is None:
+                unique_alerts.append(alert)
+                continue
+
+            event_key = (
+                alert.agent_name,
+                alert.event_record_id,
+            )
+
+            if event_key in seen_events:
+                continue
+
+            seen_events.add(event_key)
+            unique_alerts.append(alert)
+
+        return unique_alerts

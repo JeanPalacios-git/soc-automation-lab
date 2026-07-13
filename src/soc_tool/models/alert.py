@@ -19,7 +19,10 @@ class Alert:
     event_id: str | None
     username: str | None
     source_ip: str | None
+    event_record_id: str | None
     script_block_text: str | None
+    subject_username: str | None
+    target_domain: str | None
     raw_data: dict[str, Any]
 
     @classmethod
@@ -44,5 +47,8 @@ class Alert:
                 or data.get("data", {}).get("srcip")
             ),
             script_block_text=event_data.get("scriptBlockText"),
+            event_record_id=system_data.get("eventRecordID"),
+            subject_username=event_data.get("subjectUserName"),
+            target_domain=event_data.get("targetDomainName"),
             raw_data=data,
         )

@@ -16,8 +16,11 @@ def create_powershell_alert(script_text: str) -> Alert:
         rule_level=4,
         event_id="4104",
         username=None,
+        event_record_id="2001",
         source_ip=None,
         script_block_text=script_text,
+        subject_username=None,
+        target_domain=None,
         raw_data={},
     )
 

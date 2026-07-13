@@ -16,6 +16,9 @@ def create_failed_logon(timestamp: str) -> Alert:
         username="Administrator",
         source_ip="127.0.0.1",
         script_block_text=None,
+        event_record_id="1001",
+        subject_username=None,
+        target_domain=None,
         raw_data={},
     )
 
