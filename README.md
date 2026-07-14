@@ -210,19 +210,20 @@ src/
     ├── detections/
     │   ├── account_creation.py
     │   ├── brute_force.py
-    │   ├── engine.py
     │   ├── group_membership.py
     │   ├── linux_failed_sudo.py
     │   ├── linux_privileged_group.py
     │   ├── linux_ssh_brute_force.py
     │   ├── linux_user_creation.py
-    │   ├── persistence.py
-    │   ├── privilege_escalation.py
     │   └── suspicious_powershell.py
+    ├── engine/
+    │   └── engine.py
     ├── models/
     │   ├── alert.py
     │   ├── finding.py
     │   └── report.py
+    ├── persistence/
+    │   └── database.py
     └── reports/
         ├── generator.py
         └── templates/
@@ -462,6 +463,45 @@ For each finding, the analyst can:
 The workflow is intentionally modeled around entry-level SOC
 investigation tasks.
 
+## Investigation Playbooks
+
+The repository includes analyst-focused investigation playbooks designed
+to support repeatable SOC Level 1 triage.
+
+Available playbooks:
+
+  -----------------------------------------------------------------------
+  Playbook                            Investigation Focus
+  ----------------------------------- -----------------------------------
+  `brute-force.md`                    Repeated Windows and Linux
+                                      authentication failures
+
+  `persistence.md`                    Account, privilege, and scripting
+                                      activity that may support continued
+                                      access
+
+  `privilege-escalation.md`           Privileged group changes and failed
+                                      privileged command activity
+
+  `user-creation.md`                  Windows and Linux account creation
+                                      events
+  -----------------------------------------------------------------------
+
+Each playbook provides:
+
+-   Detection context
+-   Initial triage steps
+-   Investigation questions
+-   Escalation criteria
+-   Recommended response actions
+-   False-positive considerations
+-   Analyst closure documentation requirements
+
+The playbooks connect automated findings with a practical analyst
+investigation workflow. Their purpose is to document what a SOC analyst
+should review after the detection engine identifies potentially
+suspicious activity.
+
 ## Interactive Reporting
 
 The application generates an HTML SOC analysis report.
@@ -586,6 +626,11 @@ soc-automation-lab/
 │   └── screenshots/
 ├── examples/
 │   └── run_analysis.py
+├── playbooks/
+│   ├── brute-force.md
+│   ├── persistence.md
+│   ├── privilege-escalation.md
+│   └── user-creation.md
 ├── src/
 │   └── soc_tool/
 ├── tests/
@@ -594,8 +639,7 @@ soc-automation-lab/
 ├── LICENSE
 ├── README.md
 ├── launcher.py
-├── pyproject.toml
-└── requirements.txt
+└── pyproject.toml
 ```
 
 ## Security Considerations
@@ -675,6 +719,12 @@ Potential future improvements include:
 -   REST API endpoints
 -   Improved analyst case management
 -   Additional correlation logic
+
+## License
+
+This project is released under the MIT License.
+
+See `LICENSE` for the full license text.
 
 ## Disclaimer
 
