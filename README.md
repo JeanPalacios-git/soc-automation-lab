@@ -210,21 +210,19 @@ src/
     ├── detections/
     │   ├── account_creation.py
     │   ├── brute_force.py
+    │   ├── engine.py
     │   ├── group_membership.py
     │   ├── linux_failed_sudo.py
     │   ├── linux_privileged_group.py
     │   ├── linux_ssh_brute_force.py
     │   ├── linux_user_creation.py
+    │   ├── persistence.py
     │   ├── privilege_escalation.py
     │   └── suspicious_powershell.py
-    ├── engine/
-    │   └── engine.py
     ├── models/
     │   ├── alert.py
     │   ├── finding.py
     │   └── report.py
-    ├── persistence/
-    │   └── database.py
     └── reports/
         ├── generator.py
         └── templates/
