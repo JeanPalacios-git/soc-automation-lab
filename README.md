@@ -210,20 +210,18 @@ src/
     ├── detections/
     │   ├── account_creation.py
     │   ├── brute_force.py
+    │   ├── engine.py
     │   ├── group_membership.py
     │   ├── linux_failed_sudo.py
     │   ├── linux_privileged_group.py
     │   ├── linux_ssh_brute_force.py
     │   ├── linux_user_creation.py
+    │   ├── persistence.py
     │   └── suspicious_powershell.py
-    ├── engine/
-    │   └── engine.py
     ├── models/
     │   ├── alert.py
     │   ├── finding.py
     │   └── report.py
-    ├── persistence/
-    │   └── database.py
     └── reports/
         ├── generator.py
         └── templates/
@@ -470,22 +468,22 @@ to support repeatable SOC Level 1 triage.
 
 Available playbooks:
 
-  -----------------------------------------------------------------------
-  Playbook                            Investigation Focus
-  ----------------------------------- -----------------------------------
-  `brute-force.md`                    Repeated Windows and Linux
-                                      authentication failures
+  ---------------------------------------------------------------------
+  Playbook                           Investigation Focus
+  ---------------------------------- ----------------------------------
+  `brute-force.md`                   Repeated Windows and Linux
+                                     authentication failures
 
-  `persistence.md`                    Account, privilege, and scripting
-                                      activity that may support continued
-                                      access
+  `persistence.md`                   Account, privilege, and scripting
+                                     activity that may support
+                                     continued access
 
-  `privilege-escalation.md`           Privileged group changes and failed
-                                      privileged command activity
+  `privilege-escalation.md`          Privileged group changes and
+                                     failed privileged command activity
 
-  `user-creation.md`                  Windows and Linux account creation
-                                      events
-  -----------------------------------------------------------------------
+  `user-creation.md`                 Windows and Linux account creation
+                                     events
+  ---------------------------------------------------------------------
 
 Each playbook provides:
 
@@ -579,8 +577,17 @@ Example:
 
 ``` env
 WAZUH_HOST=CHANGE_ME
-WAZUH_USER=CHANGE_ME
+WAZUH_PORT=55000
+WAZUH_USERNAME=CHANGE_ME
 WAZUH_PASSWORD=CHANGE_ME
+
+WAZUH_INDEXER_HOST=CHANGE_ME
+WAZUH_INDEXER_PORT=9200
+WAZUH_INDEXER_USERNAME=CHANGE_ME
+WAZUH_INDEXER_PASSWORD=CHANGE_ME
+
+VERIFY_SSL=false
+REQUEST_TIMEOUT=30
 ```
 
 Do not commit real credentials.
