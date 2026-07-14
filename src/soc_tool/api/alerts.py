@@ -88,6 +88,33 @@ class AlertService:
 
         return self._search(query)
 
+    def get_by_rule_ids(
+        self,
+        rule_ids: list[str],
+        limit: int = 5000,
+    ) -> list[Alert]:
+        """
+        Retrieve Wazuh alerts matching multiple rule IDs.
+        """
+
+        query = {
+            "size": limit,
+            "query": {
+                "terms": {
+                    "rule.id": rule_ids,
+                }
+            },
+            "sort": [
+                {
+                    "timestamp": {
+                        "order": "desc",
+                    }
+                }
+            ],
+        }
+
+        return self._search(query)
+
     def _search(self, query: dict) -> list[Alert]:
         """
         Execute an alert search, normalize and deduplicate results.

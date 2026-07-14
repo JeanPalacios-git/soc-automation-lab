@@ -12,6 +12,18 @@ from soc_tool.detections.account_creation import AccountCreationDetector
 from soc_tool.detections.brute_force import BruteForceDetector
 from soc_tool.detections.engine import AnalysisEngine
 from soc_tool.detections.group_membership import GroupMembershipDetector
+from soc_tool.detections.linux_failed_sudo import (
+    LinuxFailedSudoDetector,
+)
+from soc_tool.detections.linux_privileged_group import (
+    LinuxPrivilegedGroupDetector,
+)
+from soc_tool.detections.linux_ssh_brute_force import (
+    LinuxSSHBruteForceDetector,
+)
+from soc_tool.detections.linux_user_creation import (
+    LinuxUserCreationDetector,
+)
 from soc_tool.detections.persistence import FindingStore
 from soc_tool.detections.suspicious_powershell import (
     SuspiciousPowerShellDetector,
@@ -23,7 +35,7 @@ from soc_tool.reports.generator import ReportGenerator
 def main() -> None:
     service = AlertService()
 
-    alerts = service.get_by_event_ids(
+    windows_alerts = service.get_by_event_ids(
         event_ids=[
             "4625",
             "4104",
@@ -33,12 +45,28 @@ def main() -> None:
         limit=5000,
     )
 
+    linux_alerts = service.get_by_rule_ids(
+        rule_ids=[
+            "2502",
+            "5404",
+            "5902",
+            "80792",
+        ],
+        limit=5000,
+    )
+
+    alerts = windows_alerts + linux_alerts
+
     engine = AnalysisEngine(
         detectors=[
             BruteForceDetector(),
             SuspiciousPowerShellDetector(),
             AccountCreationDetector(),
             GroupMembershipDetector(),
+            LinuxSSHBruteForceDetector(),
+            LinuxFailedSudoDetector(),
+            LinuxUserCreationDetector(),
+            LinuxPrivilegedGroupDetector(),
         ]
     )
 
