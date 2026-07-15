@@ -1306,3 +1306,139 @@ def test_consolidates_multiple_linux_ssh_and_sudo_findings():
             "event": "Linux Failed Sudo Activity",
         },
     ]
+
+
+def test_enriches_windows_case_with_suspicious_powershell():
+    account_created = Finding(
+        title="User Account Created",
+        description="New account created.",
+        severity="MEDIUM",
+        mitre_id="T1136",
+        recommendation="Investigate account creation.",
+        evidence={
+            "created_user": "SOC-Test-User",
+            "target_domain": "SOCLAB",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T08:00:00+00:00",
+                agent_name="DC01",
+            )
+        ],
+    )
+
+    group_change = Finding(
+        title="Privileged Group Membership Changed",
+        description="Privilege change.",
+        severity="HIGH",
+        mitre_id="T1098.007",
+        recommendation="Investigate.",
+        evidence={
+            "member_name":
+                "CN=SOC-Test-User,CN=Users,DC=soclab,DC=local",
+            "group_name": "Domain Admins",
+            "target_domain": "SOCLAB",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T08:05:00+00:00",
+                agent_name="DC01",
+            )
+        ],
+    )
+
+    powershell = Finding(
+        title="Suspicious PowerShell",
+        description="Suspicious PowerShell.",
+        severity="HIGH",
+        mitre_id="T1059.001",
+        recommendation="Investigate.",
+        evidence={},
+        related_alerts=[
+            make_alert(
+                "2026-07-15T08:10:00+00:00",
+                agent_name="DC01",
+            )
+        ],
+    )
+
+    engine = CorrelationEngine()
+
+    cases = engine.correlate(
+        [
+            account_created,
+            group_change,
+            powershell,
+        ]
+    )
+
+    assert len(cases) == 1
+    assert len(cases[0].findings) == 3
+
+
+def test_enriches_linux_case_with_failed_sudo():
+    user = Finding(
+        title="Linux User Account Created",
+        description="User created.",
+        severity="MEDIUM",
+        mitre_id="T1136",
+        recommendation="Investigate.",
+        evidence={
+            "username": "attacker-test",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T09:00:00+00:00",
+                agent_name="linux-01",
+            )
+        ],
+    )
+
+    group = Finding(
+        title="Linux Privileged Group Membership Changed",
+        description="sudo added.",
+        severity="HIGH",
+        mitre_id="T1098.007",
+        recommendation="Investigate.",
+        evidence={
+            "target_user": "attacker-test",
+            "privileged_group": "sudo",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T09:05:00+00:00",
+                agent_name="linux-01",
+            )
+        ],
+    )
+
+    sudo = Finding(
+        title="Linux Failed Sudo Activity",
+        description="Failed sudo.",
+        severity="HIGH",
+        mitre_id="T1548.003",
+        recommendation="Investigate.",
+        evidence={
+            "source_user": "attacker-test",
+            "target_user": "root",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T09:10:00+00:00",
+                agent_name="linux-01",
+            )
+        ],
+    )
+
+    engine = CorrelationEngine()
+
+    cases = engine.correlate(
+        [
+            user,
+            group,
+            sudo,
+        ]
+    )
+
+    assert len(cases) == 1
+    assert len(cases[0].findings) == 3

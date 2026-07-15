@@ -218,6 +218,52 @@ class CorrelationEngine:
             "host": host,
         }
 
+
+    @staticmethod
+    def _merge_case_findings(
+        case: Case,
+        findings: list[Finding],
+    ) -> None:
+        """
+        Enrich an existing case with additional findings.
+        """
+
+        for finding in findings:
+            if finding not in case.findings:
+                case.findings.append(finding)
+
+        case.timeline = CorrelationEngine._build_timeline(
+            case.findings
+        )
+
+        if len(case.findings) >= 3:
+            case.title = (
+                "Potential Multi-Stage Activity"
+            )
+
+
+    def _find_enrichment_case(
+        self,
+        cases: list[Case],
+        finding: Finding,
+    ) -> Case | None:
+        """
+        Find an existing case that belongs to same investigation.
+        """
+
+        host = self._get_finding_host(finding)
+
+        for case in cases:
+            case_hosts = {
+                self._get_finding_host(item)
+                for item in case.findings
+            }
+
+            if host and host in case_hosts:
+                return case
+
+        return None
+
     def correlate(self, findings: list[Finding]) -> list[Case]:
         """
         Correlate findings and return investigation cases.
@@ -550,5 +596,42 @@ class CorrelationEngine:
 
             cases.append(case)
             case_number += 1
+
+        #
+        # Pattern #5 - Multi Stage Case Enrichment
+        #
+
+        for case in cases:
+            existing_findings = case.findings
+
+            for finding in findings:
+                if finding in existing_findings:
+                    continue
+
+                same_host = (
+                    self._get_finding_host(finding)
+                    and self._get_finding_host(finding)
+                    in {
+                        self._get_finding_host(item)
+                        for item in existing_findings
+                    }
+                )
+
+                if same_host:
+                    if (
+                        finding.title
+                        in (
+                            "Suspicious PowerShell",
+                            "Linux Failed Sudo Activity",
+                        )
+                    ):
+                        self._merge_case_findings(
+                            case,
+                            [finding],
+                        )
+
         return cases
+
+
+
 

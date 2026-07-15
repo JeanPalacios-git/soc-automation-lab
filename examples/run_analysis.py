@@ -272,6 +272,34 @@ def main() -> None:
         print(
             Fore.MAGENTA
             + Style.BRIGHT
+            + "[ ATTACK STORY ]"
+        )
+
+        print(
+            Fore.WHITE
+            + "  "
+            + case.attack_story
+        )
+
+        print()
+        print(
+            Fore.MAGENTA
+            + Style.BRIGHT
+            + "[ MITRE ATT&CK ]"
+        )
+
+        for technique in case.mitre_techniques:
+            print(
+                Fore.WHITE
+                + Style.BRIGHT
+                + f"  {technique}"
+            )
+
+
+        print()
+        print(
+            Fore.MAGENTA
+            + Style.BRIGHT
             + "[ ENTITIES ]"
         )
 
@@ -330,6 +358,7 @@ def main() -> None:
         title="SOC Analysis Report",
         generated_at=datetime.now(costa_rica).isoformat(),
         findings=open_findings,
+        cases=cases,
     )
 
     output_path = Path(
@@ -350,5 +379,9 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+
+
 
 

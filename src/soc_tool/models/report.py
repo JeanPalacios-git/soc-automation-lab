@@ -2,10 +2,11 @@
 SOC analysis report model.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
 from soc_tool.models.finding import Finding
+from soc_tool.models.case import Case
 
 
 @dataclass
@@ -15,6 +16,7 @@ class Report:
     title: str
     generated_at: str
     findings: list[Finding]
+    cases: list[Case] = field(default_factory=list)
 
     @property
     def total_findings(self) -> int:
@@ -52,4 +54,6 @@ class Report:
         }
 
         return sorted(agents)
+
+
 

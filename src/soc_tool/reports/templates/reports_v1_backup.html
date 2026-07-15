@@ -1,0 +1,596 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>{{ report.title }}</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin:0;
+    padding:30px;
+    background:#0b1220;
+    color:#e5e7eb;
+    font-family:
+    "Segoe UI",
+    Arial,
+    sans-serif;
+}
+
+
+.header {
+
+    background:#111827;
+    border:1px solid #374151;
+    border-radius:14px;
+    padding:25px;
+    margin-bottom:25px;
+
+}
+
+
+.header h1 {
+
+    margin:0;
+    font-size:32px;
+
+}
+
+
+.sub {
+
+    color:#9ca3af;
+    margin-top:10px;
+
+}
+
+
+
+.stats {
+
+    display:grid;
+    grid-template-columns:
+    repeat(auto-fit,minmax(180px,1fr));
+
+    gap:15px;
+
+    margin-bottom:30px;
+
+}
+
+
+.card {
+
+    background:#111827;
+    border:1px solid #374151;
+    border-radius:12px;
+    padding:20px;
+
+}
+
+
+.number {
+
+    font-size:35px;
+    font-weight:bold;
+
+}
+
+
+.label {
+
+    color:#9ca3af;
+
+}
+
+
+
+.section-title {
+
+    font-size:24px;
+    margin:30px 0 15px;
+
+}
+
+
+
+.case {
+
+    background:#111827;
+    border:1px solid #374151;
+    border-radius:15px;
+    padding:25px;
+    margin-bottom:20px;
+
+}
+
+
+
+.case-header {
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+}
+
+
+.case-title {
+
+    font-size:22px;
+    font-weight:bold;
+
+}
+
+
+
+.badge {
+
+    display:inline-block;
+    padding:5px 10px;
+    border-radius:20px;
+    background:#1f2937;
+    border:1px solid #4b5563;
+    margin:3px;
+
+}
+
+
+
+.critical {
+
+    color:#fca5a5;
+    border-color:#dc2626;
+
+}
+
+
+
+.high {
+
+    color:#fdba74;
+    border-color:#ea580c;
+
+}
+
+
+
+.story {
+
+    background:#0f172a;
+    padding:15px;
+    border-radius:10px;
+    margin-top:15px;
+
+}
+
+
+
+.timeline {
+
+    border-left:2px solid #374151;
+    padding-left:20px;
+
+}
+
+
+
+.event {
+
+    margin:10px 0;
+
+}
+
+
+
+.entity {
+
+    color:#93c5fd;
+
+}
+
+
+
+table {
+
+    width:100%;
+    border-collapse:collapse;
+
+}
+
+
+td,th {
+
+    padding:10px;
+    border-bottom:1px solid #374151;
+
+}
+
+
+
+.search {
+
+    width:100%;
+    padding:12px;
+    margin-bottom:20px;
+    background:#111827;
+    color:white;
+    border:1px solid #374151;
+    border-radius:8px;
+
+}
+
+
+</style>
+
+
+<script>
+
+function filterCases(){
+
+let input=document
+.getElementById("search")
+.value
+.toLowerCase();
+
+
+document
+.querySelectorAll(".case")
+.forEach(c=>{
+
+c.style.display =
+c.innerText
+.toLowerCase()
+.includes(input)
+?
+"block"
+:
+"none";
+
+});
+
+}
+
+</script>
+
+
+</head>
+
+
+<body>
+
+
+<div class="header">
+
+<h1>
+🛡 SOC Investigation Dashboard
+</h1>
+
+<div class="sub">
+
+{{ report.generated_at_display }}
+
+</div>
+
+</div>
+
+
+
+<div class="stats">
+
+
+<div class="card">
+<div class="number">
+{{ report.total_findings }}
+</div>
+<div class="label">
+Open Findings
+</div>
+</div>
+
+
+<div class="card">
+<div class="number">
+{{ report.cases|length }}
+</div>
+<div class="label">
+Cases
+</div>
+</div>
+
+
+
+<div class="card">
+<div class="number">
+{{ report.high_findings }}
+</div>
+<div class="label">
+High Severity
+</div>
+</div>
+
+
+<div class="card">
+<div class="number">
+{{ report.affected_agents|length }}
+</div>
+<div class="label">
+Affected Hosts
+</div>
+</div>
+
+
+</div>
+
+
+
+
+<h2 class="section-title">
+Executive Summary
+</h2>
+
+<div class="card">
+
+<p>
+Total Findings:
+{{ report.total_findings }}
+</p>
+
+<p>
+Cases:
+{{ report.cases|length }}
+</p>
+
+<p>
+Affected Hosts:
+{{ report.affected_agents|join(", ") }}
+</p>
+
+</div>
+
+
+<h2 class="section-title">
+Incident Cases
+</h2>
+
+
+<input
+class="search"
+id="search"
+onkeyup="filterCases()"
+placeholder="Search cases..."
+>
+
+
+
+{% for case in report.cases %}
+
+
+<div class="case">
+
+
+<div class="case-header">
+
+
+<div class="case-title">
+
+{{ case.case_id }}
+<br>
+
+{{ case.title }}
+
+</div>
+
+
+<div>
+
+<span class="badge {{ case.severity|lower }}">
+
+{{ case.severity }}
+
+</span>
+
+
+</div>
+
+
+</div>
+
+
+
+
+<h3>Attack Story</h3>
+
+
+<div class="story">
+
+{{ case.attack_story }}
+
+</div>
+
+
+
+
+<h3>MITRE ATT&CK</h3>
+
+
+<div>
+
+{% for technique in case.mitre_techniques %}
+
+<span class="badge">
+
+{{ technique }}
+
+</span>
+
+{% endfor %}
+
+</div>
+
+
+
+
+<h3>Entities</h3>
+
+
+<div>
+
+{% for key,value in case.entities.items() %}
+
+<p>
+
+<span class="entity">
+{{ key }}
+</span>
+
+:
+{{ value }}
+
+</p>
+
+{% endfor %}
+
+</div>
+
+
+
+
+<h3>Timeline</h3>
+
+
+<div class="timeline">
+
+
+{% for event in case.timeline %}
+
+
+<div class="event">
+
+{{ event.timestamp }}
+
+<br>
+
+<b>
+{{ event.event }}
+</b>
+
+
+</div>
+
+
+{% endfor %}
+
+
+</div>
+
+
+
+</div>
+
+
+{% endfor %}
+
+
+
+
+
+<h2 class="section-title">
+Security Findings
+</h2>
+
+
+<div class="card">
+
+{% for finding in report.findings %}
+
+<div class="case">
+
+<h3>
+{{ finding.title }}
+</h3>
+
+<p>
+Severity:
+<b>
+{{ finding.severity }}
+</b>
+</p>
+
+
+<p>
+{{ finding.description }}
+</p>
+
+
+
+<h4>MITRE ATT&CK</h4>
+
+{% if finding.mitre_id %}
+
+<a
+href="https://attack.mitre.org/techniques/{{ finding.mitre_id }}/"
+target="_blank"
+class="badge">
+
+{{ finding.mitre_id }}
+
+</a>
+
+{% endif %}
+
+<h4>Evidence</h4>
+
+<ul>
+
+{% for key,value in finding.evidence.items() %}
+
+<li>
+<b>{{ key }}</b>:
+{{ value }}
+</li>
+
+{% endfor %}
+
+</ul>
+
+
+{% for alert in finding.related_alerts %}
+
+<p>
+<b>Agent:</b>
+{{ alert.agent_name }}
+</p>
+
+<p>
+<b>User:</b>
+{{ alert.username }}
+</p>
+
+{% endfor %}
+
+
+</div>
+
+{% endfor %}
+
+</div>
+
+</body>
+
+</html>
+
+
+
+
+
+
+
+

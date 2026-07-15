@@ -41,6 +41,25 @@ class Alert:
         return local_timestamp.strftime(
             "%Y-%m-%d %H:%M:%S Costa Rica"
         )
+
+    @property
+    def script_preview(self) -> str:
+        """
+        Return a shortened script block for reports.
+        """
+
+        if not self.script_block_text:
+            return ""
+
+        max_length = 350
+
+        if len(self.script_block_text) > max_length:
+            return (
+                self.script_block_text[:max_length]
+                + "\n\n...[TRUNCATED - View raw event for full content]..."
+            )
+
+        return self.script_block_text
     @classmethod
     def from_api(cls, data: dict[str, Any]) -> "Alert":
         """
@@ -69,3 +88,4 @@ class Alert:
             target_domain=event_data.get("targetDomainName"),
             raw_data=data,
         )
+
