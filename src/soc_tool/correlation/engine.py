@@ -446,5 +446,109 @@ class CorrelationEngine:
                     cases.append(case)
                     case_number += 1
 
+
+        linux_ssh_brute_force_findings = [
+            finding
+            for finding in findings
+            if finding.title == "Linux SSH Brute Force"
+        ]
+
+        linux_failed_sudo_findings = [
+            finding
+            for finding in findings
+            if finding.title == "Linux Failed Sudo Activity"
+        ]
+
+        linux_hosts = {
+            self._get_finding_host(finding)
+            for finding in linux_ssh_brute_force_findings
+            if self._get_finding_host(finding)
+        }
+
+        for host in linux_hosts:
+            host_ssh_findings = [
+                finding
+                for finding in linux_ssh_brute_force_findings
+                if self._get_finding_host(finding) == host
+            ]
+
+            host_sudo_findings = [
+                finding
+                for finding in linux_failed_sudo_findings
+                if self._get_finding_host(finding) == host
+            ]
+
+            correlated_ssh_findings = []
+            correlated_sudo_findings = []
+
+            for ssh_brute_force in host_ssh_findings:
+                for failed_sudo in host_sudo_findings:
+                    if self._is_ordered_within_time_window(
+                        ssh_brute_force,
+                        failed_sudo,
+                    ):
+                        if (
+                            ssh_brute_force
+                            not in correlated_ssh_findings
+                        ):
+                            correlated_ssh_findings.append(
+                                ssh_brute_force
+                            )
+
+                        if (
+                            failed_sudo
+                            not in correlated_sudo_findings
+                        ):
+                            correlated_sudo_findings.append(
+                                failed_sudo
+                            )
+
+            if (
+                not correlated_ssh_findings
+                or not correlated_sudo_findings
+            ):
+                continue
+
+            correlated_findings = (
+                correlated_ssh_findings
+                + correlated_sudo_findings
+            )
+
+            first_ssh = correlated_ssh_findings[0]
+            first_sudo = correlated_sudo_findings[0]
+
+            case = Case(
+                case_id=f"CASE-{case_number:03d}",
+                title=(
+                    "Potential Linux Post-Compromise "
+                    "Privilege Escalation"
+                ),
+                severity="Critical",
+                findings=correlated_findings,
+                timeline=self._build_timeline(
+                    correlated_findings
+                ),
+                entities={
+                    "host": host,
+                    "source_ip": (
+                        first_ssh.evidence.get(
+                            "source_ip"
+                        )
+                    ),
+                    "source_user": (
+                        first_sudo.evidence.get(
+                            "source_user"
+                        )
+                    ),
+                    "target_user": (
+                        first_sudo.evidence.get(
+                            "target_user"
+                        )
+                    ),
+                },
+            )
+
+            cases.append(case)
+            case_number += 1
         return cases
 

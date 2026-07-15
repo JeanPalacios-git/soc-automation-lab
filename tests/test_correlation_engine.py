@@ -972,3 +972,337 @@ def test_post_compromise_powershell_case_contains_entities_and_timeline():
             "event": "Suspicious PowerShell",
         },
     ]
+
+
+def test_correlates_linux_ssh_brute_force_followed_by_failed_sudo():
+    ssh_brute_force = Finding(
+        title="Linux SSH Brute Force",
+        description="Repeated SSH authentication failures were detected.",
+        severity="HIGH",
+        mitre_id="T1110",
+        recommendation="Investigate the SSH authentication activity.",
+        evidence={
+            "source_ip": "192.168.1.50",
+            "service": "sshd",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:00:00+00:00",
+                agent_name="linux-01",
+            )
+        ],
+    )
+
+    failed_sudo = Finding(
+        title="Linux Failed Sudo Activity",
+        description="Repeated failed sudo activity was detected.",
+        severity="HIGH",
+        mitre_id="T1548.003",
+        recommendation="Investigate the sudo activity.",
+        evidence={
+            "source_user": "soc-user",
+            "target_user": "root",
+            "command": "/usr/bin/id",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:10:00+00:00",
+                agent_name="linux-01",
+            )
+        ],
+    )
+
+    engine = CorrelationEngine()
+
+    cases = engine.correlate([
+        ssh_brute_force,
+        failed_sudo,
+    ])
+
+    assert len(cases) == 1
+    assert cases[0].case_id == "CASE-001"
+    assert cases[0].title == (
+        "Potential Linux Post-Compromise "
+        "Privilege Escalation"
+    )
+    assert cases[0].severity == "Critical"
+    assert cases[0].findings == [
+        ssh_brute_force,
+        failed_sudo,
+    ]
+
+
+def test_does_not_correlate_linux_ssh_and_sudo_on_different_hosts():
+    ssh_brute_force = Finding(
+        title="Linux SSH Brute Force",
+        description="Repeated SSH authentication failures were detected.",
+        severity="HIGH",
+        mitre_id="T1110",
+        recommendation="Investigate SSH activity.",
+        evidence={
+            "source_ip": "192.168.1.50",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:00:00+00:00",
+                agent_name="linux-01",
+            )
+        ],
+    )
+
+    failed_sudo = Finding(
+        title="Linux Failed Sudo Activity",
+        description="Repeated failed sudo activity was detected.",
+        severity="HIGH",
+        mitre_id="T1548.003",
+        recommendation="Investigate sudo activity.",
+        evidence={
+            "source_user": "soc-user",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:10:00+00:00",
+                agent_name="linux-02",
+            )
+        ],
+    )
+
+    engine = CorrelationEngine()
+
+    cases = engine.correlate([
+        ssh_brute_force,
+        failed_sudo,
+    ])
+
+    assert cases == []
+
+
+def test_does_not_correlate_failed_sudo_before_linux_ssh_brute_force():
+    ssh_brute_force = Finding(
+        title="Linux SSH Brute Force",
+        description="Repeated SSH authentication failures were detected.",
+        severity="HIGH",
+        mitre_id="T1110",
+        recommendation="Investigate SSH activity.",
+        evidence={
+            "source_ip": "192.168.1.50",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:10:00+00:00",
+                agent_name="linux-01",
+            )
+        ],
+    )
+
+    failed_sudo = Finding(
+        title="Linux Failed Sudo Activity",
+        description="Repeated failed sudo activity was detected.",
+        severity="HIGH",
+        mitre_id="T1548.003",
+        recommendation="Investigate sudo activity.",
+        evidence={
+            "source_user": "soc-user",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:00:00+00:00",
+                agent_name="linux-01",
+            )
+        ],
+    )
+
+    engine = CorrelationEngine()
+
+    cases = engine.correlate([
+        ssh_brute_force,
+        failed_sudo,
+    ])
+
+    assert cases == []
+
+
+def test_linux_post_compromise_case_contains_entities_and_timeline():
+    ssh_brute_force = Finding(
+        title="Linux SSH Brute Force",
+        description="Repeated SSH authentication failures were detected.",
+        severity="HIGH",
+        mitre_id="T1110",
+        recommendation="Investigate SSH activity.",
+        evidence={
+            "source_ip": "192.168.1.50",
+            "service": "sshd",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:00:00+00:00",
+                agent_name="linux-01",
+            )
+        ],
+    )
+
+    failed_sudo = Finding(
+        title="Linux Failed Sudo Activity",
+        description="Repeated failed sudo activity was detected.",
+        severity="HIGH",
+        mitre_id="T1548.003",
+        recommendation="Investigate sudo activity.",
+        evidence={
+            "source_user": "soc-user",
+            "target_user": "root",
+            "command": "/usr/bin/id",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:10:00+00:00",
+                agent_name="linux-01",
+            )
+        ],
+    )
+
+    engine = CorrelationEngine()
+
+    cases = engine.correlate([
+        failed_sudo,
+        ssh_brute_force,
+    ])
+
+    assert len(cases) == 1
+
+    assert cases[0].entities == {
+        "host": "linux-01",
+        "source_ip": "192.168.1.50",
+        "source_user": "soc-user",
+        "target_user": "root",
+    }
+
+    assert cases[0].timeline == [
+        {
+            "timestamp": "2026-07-15T10:00:00+00:00",
+            "event": "Linux SSH Brute Force",
+        },
+        {
+            "timestamp": "2026-07-15T10:10:00+00:00",
+            "event": "Linux Failed Sudo Activity",
+        },
+    ]
+
+
+def test_consolidates_multiple_linux_ssh_and_sudo_findings():
+    ssh_brute_force_1 = Finding(
+        title="Linux SSH Brute Force",
+        description="Repeated SSH authentication failures were detected.",
+        severity="HIGH",
+        mitre_id="T1110",
+        recommendation="Investigate SSH activity.",
+        evidence={
+            "source_ip": "192.168.188.1",
+            "service": "sshd",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T07:45:45+00:00",
+                agent_name="linux-01",
+            )
+        ],
+    )
+
+    ssh_brute_force_2 = Finding(
+        title="Linux SSH Brute Force",
+        description="Repeated SSH authentication failures were detected.",
+        severity="HIGH",
+        mitre_id="T1110",
+        recommendation="Investigate SSH activity.",
+        evidence={
+            "source_ip": "192.168.188.1",
+            "service": "sshd",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T07:48:41+00:00",
+                agent_name="linux-01",
+            )
+        ],
+    )
+
+    failed_sudo_1 = Finding(
+        title="Linux Failed Sudo Activity",
+        description="Repeated failed sudo activity was detected.",
+        severity="HIGH",
+        mitre_id="T1548.003",
+        recommendation="Investigate sudo activity.",
+        evidence={
+            "source_user": "yanots",
+            "target_user": "root",
+            "command": "/usr/bin/id",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T07:53:25+00:00",
+                agent_name="linux-01",
+            )
+        ],
+    )
+
+    failed_sudo_2 = Finding(
+        title="Linux Failed Sudo Activity",
+        description="Repeated failed sudo activity was detected.",
+        severity="HIGH",
+        mitre_id="T1548.003",
+        recommendation="Investigate sudo activity.",
+        evidence={
+            "source_user": "yanots",
+            "target_user": "root",
+            "command": "/usr/bin/id",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T07:53:37+00:00",
+                agent_name="linux-01",
+            )
+        ],
+    )
+
+    engine = CorrelationEngine()
+
+    cases = engine.correlate([
+        ssh_brute_force_1,
+        ssh_brute_force_2,
+        failed_sudo_1,
+        failed_sudo_2,
+    ])
+
+    assert len(cases) == 1
+
+    assert cases[0].findings == [
+        ssh_brute_force_1,
+        ssh_brute_force_2,
+        failed_sudo_1,
+        failed_sudo_2,
+    ]
+
+    assert cases[0].entities == {
+        "host": "linux-01",
+        "source_ip": "192.168.188.1",
+        "source_user": "yanots",
+        "target_user": "root",
+    }
+
+    assert cases[0].timeline == [
+        {
+            "timestamp": "2026-07-15T07:45:45+00:00",
+            "event": "Linux SSH Brute Force",
+        },
+        {
+            "timestamp": "2026-07-15T07:48:41+00:00",
+            "event": "Linux SSH Brute Force",
+        },
+        {
+            "timestamp": "2026-07-15T07:53:25+00:00",
+            "event": "Linux Failed Sudo Activity",
+        },
+        {
+            "timestamp": "2026-07-15T07:53:37+00:00",
+            "event": "Linux Failed Sudo Activity",
+        },
+    ]
