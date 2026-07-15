@@ -1,17 +1,54 @@
+# Environment
+.env
 .venv/
+
+# Python
 __pycache__/
 *.pyc
-.pytest_cache/
-.env
 
-soc_findings.db
-soc_analysis_report.html
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build
 build/
 dist/
-*.spec
+
+# Generated reports
+*.html
+*.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build
+build/
+dist/
+
+# Generated files
+*.db
+*.html
+
+# Executables
 *.exe
+*.spec
 
-*.egg-info/
-
-# Local backup files
+# Backup files
+*.backup*
 *.bak
+*_backup*
