@@ -59,6 +59,40 @@ SOC Investigation Dashboard
 
 ---
 
+# Project Structure
+
+```text
+soc-automation-lab/
+│
+├── src/
+│   └── soc_tool/
+│       ├── api/
+│       │   └── Wazuh integration
+│       │
+│       ├── detections/
+│       │   └── Detection modules
+│       │
+│       ├── correlation/
+│       │   └── Incident correlation engine
+│       │
+│       ├── models/
+│       │   └── Alert, Finding and Case models
+│       │
+│       └── reports/
+│           └── SOC report generation
+│
+├── tests/
+│   └── Automated validation
+│
+├── examples/
+│   └── Analysis execution examples
+│
+├── docs/
+│   └── screenshots
+│
+└── README.md
+```
+
 # SOC Workflow Demonstrated
 
 ```text
@@ -86,7 +120,8 @@ Analyst Investigation
 Recommendation
 ```
 
----
+
+
 
 # Main Capabilities
 
