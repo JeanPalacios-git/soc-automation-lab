@@ -12,3 +12,6 @@ dist/
 *.exe
 
 *.egg-info/
+
+# Local backup files
+*.bak
