@@ -1,4 +1,4 @@
-"""
+﻿"""
 Correlation engine for grouping related security findings.
 """
 
@@ -69,6 +69,18 @@ class CorrelationEngine:
 
         return min(timestamps)
 
+    @staticmethod
+    def _get_finding_host(finding: Finding) -> str:
+        """
+        Get the host associated with a finding.
+        """
+
+        for alert in finding.related_alerts:
+            if alert.agent_name:
+                return alert.agent_name.strip().casefold()
+
+        return ""
+
     def _within_time_window(
         self,
         first_finding: Finding,
@@ -130,12 +142,12 @@ class CorrelationEngine:
         return timeline
 
     @staticmethod
-    def _build_entities(
+    def _build_windows_entities(
         account_creation: Finding,
         group_change: Finding,
     ) -> dict:
         """
-        Build a summary of important entities involved in the case.
+        Build important entities for a Windows privileged account case.
         """
 
         return {
@@ -147,32 +159,60 @@ class CorrelationEngine:
             ),
         }
 
+    @staticmethod
+    def _build_linux_entities(
+        user_creation: Finding,
+        group_change: Finding,
+    ) -> dict:
+        """
+        Build important entities for a Linux privileged account case.
+        """
+
+        host = None
+
+        for alert in user_creation.related_alerts:
+            if alert.agent_name:
+                host = alert.agent_name
+                break
+
+        if host is None:
+            for alert in group_change.related_alerts:
+                if alert.agent_name:
+                    host = alert.agent_name
+                    break
+
+        return {
+            "user": user_creation.evidence.get("username"),
+            "group": group_change.evidence.get("privileged_group"),
+            "host": host,
+        }
+
     def correlate(self, findings: list[Finding]) -> list[Case]:
         """
         Correlate findings and return investigation cases.
         """
 
-        account_creations = [
+        cases = []
+        case_number = 1
+
+        windows_account_creations = [
             finding
             for finding in findings
             if finding.title == "User Account Created"
         ]
 
-        group_changes = [
+        windows_group_changes = [
             finding
             for finding in findings
             if finding.title == "Privileged Group Membership Changed"
         ]
 
-        cases = []
-        case_number = 1
-
-        for account_creation in account_creations:
+        for account_creation in windows_account_creations:
             created_user = self._normalize_identity(
                 account_creation.evidence.get("created_user")
             )
 
-            for group_change in group_changes:
+            for group_change in windows_group_changes:
                 added_member = self._normalize_identity(
                     group_change.evidence.get("member_name")
                 )
@@ -201,8 +241,84 @@ class CorrelationEngine:
                         timeline=self._build_timeline(
                             correlated_findings
                         ),
-                        entities=self._build_entities(
+                        entities=self._build_windows_entities(
                             account_creation,
+                            group_change,
+                        ),
+                    )
+
+                    cases.append(case)
+                    case_number += 1
+
+        linux_user_creations = [
+            finding
+            for finding in findings
+            if finding.title == "Linux User Account Created"
+        ]
+
+        linux_group_changes = [
+            finding
+            for finding in findings
+            if finding.title
+            == "Linux Privileged Group Membership Changed"
+        ]
+
+        for user_creation in linux_user_creations:
+            created_user = self._normalize_identity(
+                user_creation.evidence.get("username")
+            )
+
+            creation_host = self._get_finding_host(
+                user_creation
+            )
+
+            for group_change in linux_group_changes:
+                added_user = self._normalize_identity(
+                    group_change.evidence.get("target_user")
+                )
+
+                group_change_host = self._get_finding_host(
+                    group_change
+                )
+
+                same_identity = (
+                    created_user
+                    and created_user == added_user
+                )
+
+                same_host = (
+                    creation_host
+                    and creation_host == group_change_host
+                )
+
+                within_time_window = self._within_time_window(
+                    user_creation,
+                    group_change,
+                )
+
+                if (
+                    same_identity
+                    and same_host
+                    and within_time_window
+                ):
+                    correlated_findings = [
+                        user_creation,
+                        group_change,
+                    ]
+
+                    case = Case(
+                        case_id=f"CASE-{case_number:03d}",
+                        title=(
+                            "Potential Privileged Linux "
+                            "Account Activity"
+                        ),
+                        severity="High",
+                        findings=correlated_findings,
+                        timeline=self._build_timeline(
+                            correlated_findings
+                        ),
+                        entities=self._build_linux_entities(
+                            user_creation,
                             group_change,
                         ),
                     )
