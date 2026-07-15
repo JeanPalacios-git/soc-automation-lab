@@ -1,0 +1,1237 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ report.title }}</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111827;
+            color: #e5e7eb;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+        }
+
+        .generated,
+        .agent {
+            color: #9ca3af;
+        }
+
+        .generated {
+            margin-bottom: 30px;
+        }
+
+        .summary {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card,
+        .executive-summary,
+        .finding {
+            background: #1f2937;
+            border-radius: 8px;
+        }
+
+        .summary-card {
+            padding: 20px;
+            flex: 1;
+        }
+
+        .summary-card h2 {
+            margin: 0;
+            font-size: 32px;
+        }
+
+        .summary-card p {
+            color: #9ca3af;
+            margin-bottom: 0;
+        }
+
+        .executive-summary {
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .finding {
+            margin-bottom: 20px;
+            padding: 25px;
+        }
+
+        .severity {
+            font-weight: bold;
+        }
+
+        .HIGH {
+            color: #f87171;
+        }
+
+        .MEDIUM {
+            color: #fbbf24;
+        }
+
+        .mitre {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+
+        .mitre:hover {
+            text-decoration: underline;
+        }
+
+        .evidence {
+            background: #111827;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        .evidence-item {
+            margin: 5px 0;
+        }
+
+        .label {
+            color: #9ca3af;
+        }
+
+        .sort-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #1f2937;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .sort-controls label {
+            color: #9ca3af;
+            font-weight: bold;
+        }
+
+        .sort-controls select,
+        .sort-controls button {
+            background: #111827;
+            color: #e5e7eb;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .sort-controls select:hover,
+        .sort-controls button:hover {
+            border-color: #60a5fa;
+        }
+
+        .triage {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #374151;
+        }
+
+        .triage textarea {
+            width: 100%;
+            box-sizing: border-box;
+            background: #111827;
+            color: #e5e7eb;
+            border: 1px solid #4b5563;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+            resize: vertical;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 6px;
+            padding: 10px 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .resolve {
+            background: #10b981;
+            color: #ffffff;
+        }
+
+        .false-positive {
+            background: #f59e0b;
+            color: #111827;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+    
+
+/* SOC COMPACT DETECTION DASHBOARD */
+
+.detection-dashboard {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid #334155;
+}
+
+.detection-dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.detection-dashboard-title {
+    margin: 0;
+    font-size: 18px;
+    color: #f8fafc;
+}
+
+.detection-dashboard-total {
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.detection-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.detection-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+    min-height: 92px;
+    padding: 13px 14px;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    background: #0f172a;
+    color: #e2e8f0;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease,
+        background 0.15s ease;
+}
+
+.detection-card:hover {
+    transform: translateY(-2px);
+    border-color: #38bdf8;
+    background: #172033;
+}
+
+.detection-card:focus-visible {
+    outline: 2px solid #38bdf8;
+    outline-offset: 2px;
+}
+
+.detection-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.detection-name {
+    min-width: 0;
+    color: #f8fafc;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.detection-os {
+    flex-shrink: 0;
+    padding: 2px 6px;
+    border: 1px solid #475569;
+    border-radius: 999px;
+    color: #94a3b8;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.detection-card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-top: 13px;
+}
+
+.detection-count {
+    color: #cbd5e1;
+    font-size: 12px;
+}
+
+.detection-count strong {
+    color: #f8fafc;
+    font-size: 18px;
+    margin-right: 4px;
+}
+
+.detection-severity {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.detection-severity::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #94a3b8;
+}
+
+.detection-severity.high {
+    color: #f87171;
+}
+
+.detection-severity.high::before {
+    background: #ef4444;
+}
+
+.detection-severity.medium {
+    color: #fbbf24;
+}
+
+.detection-severity.medium::before {
+    background: #f59e0b;
+}
+
+.detection-severity.low {
+    color: #60a5fa;
+}
+
+.detection-severity.low::before {
+    background: #3b82f6;
+}
+
+@media (max-width: 1050px) {
+    .detection-grid {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .detection-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 520px) {
+    .detection-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .detection-dashboard-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+}
+
+
+/* SOC FINDING GRID */
+
+#findings-container {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
+}
+
+#findings-container .finding {
+    min-width: 0;
+    margin: 0;
+    height: auto;
+}
+
+#findings-container .finding h2 {
+    margin-top: 0;
+}
+
+#findings-container .finding pre,
+#findings-container .finding textarea {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+#findings-container .finding pre {
+    overflow-x: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+    #findings-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* SOC COLLAPSIBLE EVIDENCE */
+
+.evidence-item {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.evidence-preview {
+    margin-top: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color: #e5e7eb;
+}
+
+.evidence-details {
+    margin-top: 10px;
+}
+
+.evidence-details summary {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    color: #60a5fa;
+    font-weight: 600;
+    font-size: 0.9rem;
+    user-select: none;
+}
+
+.evidence-details summary:hover {
+    text-decoration: underline;
+}
+
+.evidence-full {
+    margin-top: 10px;
+    padding: 12px;
+    max-height: 420px;
+    overflow: auto;
+    background: #0b1220;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-family: Consolas, monospace;
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+.evidence-value {
+    overflow-wrap: anywhere;
+}
+
+
+/* SOC WIDE DASHBOARD LAYOUT */
+
+.container {
+    width: min(94vw, 1600px);
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+#findings-container {
+    grid-template-columns:
+        repeat(2, minmax(500px, 1fr));
+    gap: 20px;
+}
+
+.finding {
+    padding: 24px;
+}
+
+@media (max-width: 1100px) {
+    .container {
+        width: min(94vw, 900px);
+    }
+
+    #findings-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+</style>
+</head>
+
+<body>
+<div class="container">
+
+    <h1>{{ report.title }}</h1>
+
+    <p class="generated">
+        Generated at {{ report.generated_at_display }}
+    </p>
+
+    <div class="summary">
+        <div class="summary-card">
+            <h2>{{ report.total_findings }}</h2>
+            <p>Open Findings</p>
+        </div>
+
+        <div class="summary-card">
+            <h2>{{ report.high_findings }}</h2>
+            <p>High Severity</p>
+        </div>
+
+        <div class="summary-card">
+            <h2>{{ report.medium_findings }}</h2>
+            <p>Medium Severity</p>
+        </div>
+    </div>
+
+    <div class="executive-summary">
+        <h2>Executive Summary</h2>
+
+        <p>
+            The analysis engine identified
+            <strong>{{ report.total_findings }} open security findings</strong>,
+            including
+            <strong>{{ report.high_findings }} high-severity findings</strong>
+            and
+            <strong>{{ report.medium_findings }} medium-severity findings</strong>.
+        </p>
+
+        <p>
+            Affected agents:
+            <strong>{{ report.affected_agents | join(", ") }}</strong>
+        </p>
+
+        <p>
+            High-severity findings should be prioritized for investigation
+            and validated against authorized administrative activity.
+        </p>
+    </div>
+
+    <div class="sort-controls">
+        <label for="finding-sort">Sort findings by:</label>
+
+        <select id="finding-sort">
+            <option value="default">Default order</option>
+            <option value="severity">Severity</option>
+            <option value="agent">Agent</option>
+            <option value="title">Finding name</option>
+            <option value="time">Event time</option>
+        </select>
+
+        <button id="sort-direction" type="button">
+            Descending
+        </button>
+    </div>
+
+    <div id="findings-container">
+    {% for finding in report.findings %}
+    <div class="finding">
+        <h2>{{ finding.title }}</h2>
+
+        <p>
+            <span class="severity {{ finding.severity }}">
+                {{ finding.severity }}
+            </span>
+            |
+
+            <a
+                class="mitre"
+                href="https://attack.mitre.org/techniques/{{ finding.mitre_id | replace('.', '/') }}/"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                MITRE ATT&CK {{ finding.mitre_id }}
+            </a>
+        </p>
+
+        {% if finding.related_alerts %}
+        <div class="agent">
+            <p>
+                Agent: {{ finding.related_alerts[0].agent_name }}
+            </p>
+
+            <p>
+                Event Time: {{ finding.related_alerts[0].timestamp_display }}
+            </p>
+
+            <p>
+                Event Record ID:
+                {{ finding.related_alerts[0].event_record_id or "N/A" }}
+            </p>
+        </div>
+        {% endif %}
+
+        <h3>Description</h3>
+        <p>{{ finding.description }}</p>
+
+        <h3>Evidence</h3>
+
+        <div class="evidence">
+            {% for key, value in finding.evidence.items() %}
+            <div class="evidence-item">
+                <span class="label">{{ key }}:</span>
+
+                {% if value|string|length > 300 %}
+                <div class="evidence-preview">
+                    {{ value }}
+                </div>
+
+                <details class="evidence-details">
+                    <summary>View Full Evidence</summary>
+
+                    <div class="evidence-full">
+                        {{ value }}
+                    </div>
+                </details>
+                {% else %}
+                <span class="evidence-value">
+                    {{ value }}
+                </span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <h3>Recommendation</h3>
+        <p>{{ finding.recommendation }}</p>
+
+        <form
+            class="triage"
+            method="post"
+            action="/finding/update"
+        >
+            <input
+                type="hidden"
+                name="fingerprint"
+                value="{{ finding.fingerprint }}"
+            >
+
+            <h3>Analyst Triage</h3>
+
+            <textarea
+                name="analyst_note"
+                rows="3"
+                placeholder="Analyst note..."
+            ></textarea>
+
+            <div class="actions">
+                <button
+                    class="resolve"
+                    type="submit"
+                    name="status"
+                    value="RESOLVED"
+                >
+                    Resolve
+                </button>
+
+                <button
+                    class="false-positive"
+                    type="submit"
+                    name="status"
+                    value="FALSE_POSITIVE"
+                >
+                    False Positive
+                </button>
+            </div>
+        </form>
+    </div>
+    {% endfor %}
+    </div>
+
+<script>
+    const sortSelect = document.getElementById("finding-sort");
+    const directionButton = document.getElementById("sort-direction");
+    const findingsContainer = document.getElementById("findings-container");
+
+    let descending = true;
+
+    const severityRank = {
+        "CRITICAL": 4,
+        "HIGH": 3,
+        "MEDIUM": 2,
+        "LOW": 1
+    };
+
+    function getFindingData(finding) {
+        const severity =
+            finding.querySelector(".severity")?.textContent.trim() || "";
+
+        const agent =
+            finding.querySelector(".agent")?.textContent
+                .replace("Agent:", "")
+                .trim() || "";
+
+        const title =
+            finding.querySelector("h2")?.textContent.trim() || "";
+
+        const text = finding.textContent;
+
+        const timeMatch = text.match(
+            /Event Time:\s*(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/
+        );
+
+        const time = timeMatch
+            ? new Date(timeMatch[1].replace(" ", "T")).getTime()
+            : 0;
+
+        return {
+            severity,
+            agent,
+            title,
+            time
+        };
+    }
+
+    function sortFindings() {
+        const sortBy = sortSelect.value;
+
+        const findings = Array.from(
+            findingsContainer.querySelectorAll(".finding")
+        );
+
+        if (sortBy === "default") {
+            findings.sort(
+                (a, b) =>
+                    Number(a.dataset.originalOrder) -
+                    Number(b.dataset.originalOrder)
+            );
+        } else {
+            findings.sort((a, b) => {
+                const aData = getFindingData(a);
+                const bData = getFindingData(b);
+
+                let comparison = 0;
+
+                if (sortBy === "severity") {
+                    comparison =
+                        (severityRank[aData.severity] || 0) -
+                        (severityRank[bData.severity] || 0);
+                }
+
+                if (sortBy === "agent") {
+                    comparison = aData.agent.localeCompare(bData.agent);
+                }
+
+                if (sortBy === "title") {
+                    comparison = aData.title.localeCompare(bData.title);
+                }
+
+                if (sortBy === "time") {
+                    comparison = aData.time - bData.time;
+                }
+
+                return descending ? -comparison : comparison;
+            });
+        }
+
+        findings.forEach(
+            finding => findingsContainer.appendChild(finding)
+        );
+    }
+
+    document
+        .querySelectorAll("#findings-container .finding")
+        .forEach((finding, index) => {
+            finding.dataset.originalOrder = index;
+        });
+
+    sortSelect.addEventListener("change", sortFindings);
+
+    directionButton.addEventListener("click", () => {
+        descending = !descending;
+
+        directionButton.textContent =
+            descending ? "Descending" : "Ascending";
+
+        sortFindings();
+    });
+</script>
+
+</div>
+
+
+
+
+<!-- SOC COMPACT DETECTION DASHBOARD -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const normalize = value =>
+        (value || "").trim().toLowerCase();
+
+    const getFindingCards = () =>
+        Array.from(
+            document.querySelectorAll(".finding")
+        );
+
+    const getFindingTitle = card => {
+        if (card.dataset.findingTitle) {
+            return card.dataset.findingTitle;
+        }
+
+        const heading = card.querySelector("h2, h3");
+
+        if (!heading) {
+            return "Unknown Detection";
+        }
+
+        const title = heading.textContent.trim();
+
+        card.dataset.findingTitle = title;
+
+        return title;
+    };
+
+    const getSeverity = card => {
+        const severity = card.querySelector(".severity");
+
+        return severity
+            ? severity.textContent.trim().toUpperCase()
+            : "UNKNOWN";
+    };
+
+    const getAgent = card => {
+        const text = card.textContent || "";
+
+        const match = text.match(
+            /Agent:\s*([^\n\r]+)/i
+        );
+
+        return match
+            ? match[1].trim().split(/\s+/)[0]
+            : "Unknown";
+    };
+
+    const linuxDetections = new Set([
+        "linux failed sudo activity",
+        "linux ssh brute force",
+        "linux user account created",
+        "linux privileged group membership changed"
+    ]);
+
+    const getOperatingSystem = card => {
+        const title = normalize(
+            getFindingTitle(card)
+        );
+
+        const agent = normalize(
+            getAgent(card)
+        );
+
+        if (linuxDetections.has(title)) {
+            return "Linux";
+        }
+
+        if (
+            agent.includes("linux") ||
+            agent.includes("wazuh")
+        ) {
+            return "Linux";
+        }
+
+        return "Windows";
+    };
+
+    const cards = getFindingCards();
+
+    cards.forEach((card, index) => {
+        card.dataset.originalOrder = index;
+        card.dataset.operatingSystem =
+            getOperatingSystem(card);
+    });
+
+    // ========================================================
+    // DETECTION DASHBOARD
+    // ========================================================
+
+    const summaryHeading = Array.from(
+        document.querySelectorAll("h2, h3")
+    ).find(
+        heading =>
+            normalize(heading.textContent) ===
+            "executive summary"
+    );
+
+    if (summaryHeading && cards.length) {
+        const summaryContainer =
+            summaryHeading.parentElement;
+
+        const detectionGroups = new Map();
+
+        cards.forEach(card => {
+            const title = getFindingTitle(card);
+            const severity = getSeverity(card);
+            const os = getOperatingSystem(card);
+
+            if (!detectionGroups.has(title)) {
+                detectionGroups.set(title, {
+                    title,
+                    severity,
+                    os,
+                    cards: [],
+                });
+            }
+
+            detectionGroups
+                .get(title)
+                .cards
+                .push(card);
+        });
+
+        const severityWeight = {
+            HIGH: 3,
+            MEDIUM: 2,
+            LOW: 1,
+            UNKNOWN: 0,
+        };
+
+        const groups = Array.from(
+            detectionGroups.values()
+        ).sort((a, b) => {
+            const severityDifference =
+                (severityWeight[b.severity] || 0) -
+                (severityWeight[a.severity] || 0);
+
+            if (severityDifference !== 0) {
+                return severityDifference;
+            }
+
+            return b.cards.length - a.cards.length;
+        });
+
+        const dashboard =
+            document.createElement("div");
+
+        dashboard.className =
+            "detection-dashboard";
+
+        const header =
+            document.createElement("div");
+
+        header.className =
+            "detection-dashboard-header";
+
+        const dashboardTitle =
+            document.createElement("h3");
+
+        dashboardTitle.className =
+            "detection-dashboard-title";
+
+        dashboardTitle.textContent =
+            "Detection Breakdown";
+
+        const dashboardTotal =
+            document.createElement("span");
+
+        dashboardTotal.className =
+            "detection-dashboard-total";
+
+        dashboardTotal.textContent =
+            `${groups.length} detection types across ` +
+            `${cards.length} open findings`;
+
+        header.append(
+            dashboardTitle,
+            dashboardTotal
+        );
+
+        const grid =
+            document.createElement("div");
+
+        grid.className = "detection-grid";
+
+        groups.forEach(group => {
+            const button =
+                document.createElement("button");
+
+            button.type = "button";
+            button.className = "detection-card";
+
+            const top =
+                document.createElement("div");
+
+            top.className = "detection-card-top";
+
+            const name =
+                document.createElement("span");
+
+            name.className = "detection-name";
+            name.textContent = group.title;
+
+            const os =
+                document.createElement("span");
+
+            os.className = "detection-os";
+            os.textContent = group.os;
+
+            top.append(name, os);
+
+            const bottom =
+                document.createElement("div");
+
+            bottom.className =
+                "detection-card-bottom";
+
+            const count =
+                document.createElement("span");
+
+            count.className = "detection-count";
+
+            const countNumber =
+                document.createElement("strong");
+
+            countNumber.textContent =
+                group.cards.length;
+
+            const countLabel =
+                document.createTextNode(
+                    group.cards.length === 1
+                        ? " finding"
+                        : " findings"
+                );
+
+            count.append(
+                countNumber,
+                countLabel
+            );
+
+            const severity =
+                document.createElement("span");
+
+            severity.className =
+                "detection-severity " +
+                normalize(group.severity);
+
+            severity.textContent =
+                group.severity;
+
+            bottom.append(
+                count,
+                severity
+            );
+
+            button.append(
+                top,
+                bottom
+            );
+
+            button.title =
+                `Jump to ${group.title}`;
+
+            button.addEventListener(
+                "click",
+                () => {
+                    const target =
+                        group.cards[0];
+
+                    target.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                    });
+
+                    target.animate(
+                        [
+                            {
+                                outline:
+                                    "2px solid #38bdf8",
+                            },
+                            {
+                                outline:
+                                    "2px solid transparent",
+                            },
+                        ],
+                        {
+                            duration: 1200,
+                            easing: "ease-out",
+                        }
+                    );
+                }
+            );
+
+            grid.appendChild(button);
+        });
+
+        dashboard.append(
+            header,
+            grid
+        );
+
+        summaryContainer.appendChild(
+            dashboard
+        );
+    }
+
+    // ========================================================
+    // OPERATING SYSTEM SORT OPTION
+    // ========================================================
+
+    const sortSelect = Array.from(
+        document.querySelectorAll("select")
+    ).find(select =>
+        Array.from(select.options).some(
+            option =>
+                normalize(option.textContent)
+                    .includes("default order")
+        )
+    );
+
+    if (sortSelect) {
+        const exists = Array.from(
+            sortSelect.options
+        ).some(
+            option =>
+                option.value === "operating-system"
+        );
+
+        if (!exists) {
+            const option =
+                document.createElement("option");
+
+            option.value = "operating-system";
+            option.textContent =
+                "Operating system";
+
+            sortSelect.appendChild(option);
+        }
+
+        const sortByOperatingSystem = () => {
+            if (
+                sortSelect.value !==
+                "operating-system"
+            ) {
+                return;
+            }
+
+            const currentCards =
+                getFindingCards();
+
+            if (!currentCards.length) {
+                return;
+            }
+
+            const container =
+                document.querySelector(
+                    "#findings-container"
+                ) ||
+                currentCards[0].parentElement;
+
+            const directionButton =
+                Array.from(
+                    document.querySelectorAll(
+                        "button"
+                    )
+                ).find(button => {
+                    const text = normalize(
+                        button.textContent
+                    );
+
+                    return (
+                        text === "ascending" ||
+                        text === "descending"
+                    );
+                });
+
+            const descending =
+                directionButton &&
+                normalize(
+                    directionButton.textContent
+                ) === "descending";
+
+            currentCards
+                .sort((a, b) => {
+                    const osA =
+                        a.dataset.operatingSystem ||
+                        "";
+
+                    const osB =
+                        b.dataset.operatingSystem ||
+                        "";
+
+                    const osDifference =
+                        osA.localeCompare(osB);
+
+                    if (osDifference !== 0) {
+                        return descending
+                            ? -osDifference
+                            : osDifference;
+                    }
+
+                    return (
+                        Number(
+                            a.dataset.originalOrder
+                        ) -
+                        Number(
+                            b.dataset.originalOrder
+                        )
+                    );
+                })
+                .forEach(card =>
+                    container.appendChild(card)
+                );
+        };
+
+        sortSelect.addEventListener(
+            "change",
+            () => {
+                setTimeout(
+                    sortByOperatingSystem,
+                    0
+                );
+            }
+        );
+
+        document.addEventListener(
+            "click",
+            event => {
+                const text = normalize(
+                    event.target.textContent
+                );
+
+                if (
+                    text === "ascending" ||
+                    text === "descending"
+                ) {
+                    setTimeout(
+                        sortByOperatingSystem,
+                        0
+                    );
+                }
+            }
+        );
+    }
+});
+</script>
+
+</body>
+</html>
+
+
+
