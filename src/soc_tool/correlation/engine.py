@@ -81,6 +81,37 @@ class CorrelationEngine:
 
         return ""
 
+    def _is_ordered_within_time_window(
+        self,
+        first_finding: Finding,
+        second_finding: Finding,
+    ) -> bool:
+        """
+        Check whether the second finding occurred after the first
+        and within the configured correlation window.
+        """
+
+        first_timestamp = self._get_finding_timestamp(
+            first_finding
+        )
+        second_timestamp = self._get_finding_timestamp(
+            second_finding
+        )
+
+        if first_timestamp is None or second_timestamp is None:
+            return False
+
+        difference = (
+            second_timestamp - first_timestamp
+        ).total_seconds()
+
+        maximum_difference = (
+            self.correlation_window_hours * 3600
+        )
+
+        return (
+            0 <= difference <= maximum_difference
+        )
     def _within_time_window(
         self,
         first_finding: Finding,
@@ -326,4 +357,94 @@ class CorrelationEngine:
                     cases.append(case)
                     case_number += 1
 
+        brute_force_findings = [
+            finding
+            for finding in findings
+            if finding.title == "Possible Brute Force"
+        ]
+
+        suspicious_powershell_findings = [
+            finding
+            for finding in findings
+            if finding.title == "Suspicious PowerShell"
+        ]
+
+        for brute_force in brute_force_findings:
+            brute_force_host = self._get_finding_host(
+                brute_force
+            )
+
+            for suspicious_powershell in (
+                suspicious_powershell_findings
+            ):
+                powershell_host = self._get_finding_host(
+                    suspicious_powershell
+                )
+
+                same_host = (
+                    brute_force_host
+                    and brute_force_host == powershell_host
+                )
+
+                ordered_within_time_window = (
+                    self._is_ordered_within_time_window(
+                        brute_force,
+                        suspicious_powershell,
+                    )
+                )
+
+                if (
+                    same_host
+                    and ordered_within_time_window
+                ):
+                    correlated_findings = [
+                        brute_force,
+                        suspicious_powershell,
+                    ]
+
+                    host = None
+
+                    for alert in brute_force.related_alerts:
+                        if alert.agent_name:
+                            host = alert.agent_name
+                            break
+
+                    if host is None:
+                        for alert in (
+                            suspicious_powershell.related_alerts
+                        ):
+                            if alert.agent_name:
+                                host = alert.agent_name
+                                break
+
+                    case = Case(
+                        case_id=f"CASE-{case_number:03d}",
+                        title=(
+                            "Potential Post-Compromise "
+                            "PowerShell Activity"
+                        ),
+                        severity="Critical",
+                        findings=correlated_findings,
+                        timeline=self._build_timeline(
+                            correlated_findings
+                        ),
+                        entities={
+                            "host": host,
+                            "target_user": (
+                                brute_force.evidence.get(
+                                    "username"
+                                )
+                            ),
+                            "source_ip": (
+                                brute_force.evidence.get(
+                                    "source_ip"
+                                )
+                            ),
+                        },
+                    )
+
+                    cases.append(case)
+                    case_number += 1
+
         return cases
+

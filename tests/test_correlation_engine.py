@@ -716,3 +716,259 @@ def test_linux_correlated_case_contains_chronological_timeline():
             ),
         },
     ]
+
+
+def test_correlates_brute_force_followed_by_suspicious_powershell():
+    brute_force = Finding(
+        title="Possible Brute Force",
+        description="Repeated failed logon attempts were detected.",
+        severity="HIGH",
+        mitre_id="T1110",
+        recommendation="Investigate the source IP and target account.",
+        evidence={
+            "source_ip": "192.168.1.50",
+            "username": "Administrator",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:00:00+00:00",
+                agent_name="JeanPc",
+            )
+        ],
+    )
+
+    suspicious_powershell = Finding(
+        title="Suspicious PowerShell",
+        description="Suspicious PowerShell activity was detected.",
+        severity="HIGH",
+        mitre_id="T1059.001",
+        recommendation="Investigate the PowerShell activity.",
+        evidence={
+            "matched_patterns": [
+                "downloadstring",
+            ],
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:10:00+00:00",
+                agent_name="JeanPc",
+            )
+        ],
+    )
+
+    engine = CorrelationEngine()
+
+    cases = engine.correlate([
+        brute_force,
+        suspicious_powershell,
+    ])
+
+    assert len(cases) == 1
+    assert cases[0].case_id == "CASE-001"
+    assert cases[0].title == (
+        "Potential Post-Compromise PowerShell Activity"
+    )
+    assert cases[0].severity == "Critical"
+    assert cases[0].findings == [
+        brute_force,
+        suspicious_powershell,
+    ]
+
+
+def test_does_not_correlate_brute_force_and_powershell_on_different_hosts():
+    brute_force = Finding(
+        title="Possible Brute Force",
+        description="Repeated failed logon attempts were detected.",
+        severity="HIGH",
+        mitre_id="T1110",
+        recommendation="Investigate the source IP and target account.",
+        evidence={
+            "source_ip": "192.168.1.50",
+            "username": "Administrator",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:00:00+00:00",
+                agent_name="DC01",
+            )
+        ],
+    )
+
+    suspicious_powershell = Finding(
+        title="Suspicious PowerShell",
+        description="Suspicious PowerShell activity was detected.",
+        severity="HIGH",
+        mitre_id="T1059.001",
+        recommendation="Investigate the PowerShell activity.",
+        evidence={},
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:10:00+00:00",
+                agent_name="JeanPc",
+            )
+        ],
+    )
+
+    engine = CorrelationEngine()
+
+    cases = engine.correlate([
+        brute_force,
+        suspicious_powershell,
+    ])
+
+    assert cases == []
+
+
+def test_does_not_correlate_powershell_before_brute_force():
+    brute_force = Finding(
+        title="Possible Brute Force",
+        description="Repeated failed logon attempts were detected.",
+        severity="HIGH",
+        mitre_id="T1110",
+        recommendation="Investigate the source IP and target account.",
+        evidence={
+            "source_ip": "192.168.1.50",
+            "username": "Administrator",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:10:00+00:00",
+                agent_name="JeanPc",
+            )
+        ],
+    )
+
+    suspicious_powershell = Finding(
+        title="Suspicious PowerShell",
+        description="Suspicious PowerShell activity was detected.",
+        severity="HIGH",
+        mitre_id="T1059.001",
+        recommendation="Investigate the PowerShell activity.",
+        evidence={},
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:00:00+00:00",
+                agent_name="JeanPc",
+            )
+        ],
+    )
+
+    engine = CorrelationEngine()
+
+    cases = engine.correlate([
+        brute_force,
+        suspicious_powershell,
+    ])
+
+    assert cases == []
+
+
+def test_does_not_correlate_brute_force_and_powershell_outside_time_window():
+    brute_force = Finding(
+        title="Possible Brute Force",
+        description="Repeated failed logon attempts were detected.",
+        severity="HIGH",
+        mitre_id="T1110",
+        recommendation="Investigate the source IP and target account.",
+        evidence={
+            "source_ip": "192.168.1.50",
+            "username": "Administrator",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:00:00+00:00",
+                agent_name="JeanPc",
+            )
+        ],
+    )
+
+    suspicious_powershell = Finding(
+        title="Suspicious PowerShell",
+        description="Suspicious PowerShell activity was detected.",
+        severity="HIGH",
+        mitre_id="T1059.001",
+        recommendation="Investigate the PowerShell activity.",
+        evidence={},
+        related_alerts=[
+            make_alert(
+                "2026-07-17T10:00:00+00:00",
+                agent_name="JeanPc",
+            )
+        ],
+    )
+
+    engine = CorrelationEngine(
+        correlation_window_hours=24
+    )
+
+    cases = engine.correlate([
+        brute_force,
+        suspicious_powershell,
+    ])
+
+    assert cases == []
+
+
+def test_post_compromise_powershell_case_contains_entities_and_timeline():
+    brute_force = Finding(
+        title="Possible Brute Force",
+        description="Repeated failed logon attempts were detected.",
+        severity="HIGH",
+        mitre_id="T1110",
+        recommendation="Investigate the source IP and target account.",
+        evidence={
+            "source_ip": "192.168.1.50",
+            "username": "Administrator",
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:00:00+00:00",
+                agent_name="JeanPc",
+            )
+        ],
+    )
+
+    suspicious_powershell = Finding(
+        title="Suspicious PowerShell",
+        description="Suspicious PowerShell activity was detected.",
+        severity="HIGH",
+        mitre_id="T1059.001",
+        recommendation="Investigate the PowerShell activity.",
+        evidence={
+            "matched_patterns": [
+                "downloadstring",
+            ],
+        },
+        related_alerts=[
+            make_alert(
+                "2026-07-15T10:10:00+00:00",
+                agent_name="JeanPc",
+            )
+        ],
+    )
+
+    engine = CorrelationEngine()
+
+    cases = engine.correlate([
+        suspicious_powershell,
+        brute_force,
+    ])
+
+    assert len(cases) == 1
+
+    assert cases[0].entities == {
+        "host": "JeanPc",
+        "target_user": "Administrator",
+        "source_ip": "192.168.1.50",
+    }
+
+    assert cases[0].timeline == [
+        {
+            "timestamp": "2026-07-15T10:00:00+00:00",
+            "event": "Possible Brute Force",
+        },
+        {
+            "timestamp": "2026-07-15T10:10:00+00:00",
+            "event": "Suspicious PowerShell",
+        },
+    ]

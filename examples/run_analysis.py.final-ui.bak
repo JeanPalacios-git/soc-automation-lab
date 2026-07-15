@@ -4,8 +4,6 @@ Run the SOC analysis engine against real Wazuh alerts.
 
 from collections import Counter
 from colorama import Fore, Style, init
-from urllib3.exceptions import InsecureRequestWarning
-import urllib3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -36,8 +34,6 @@ from soc_tool.reports.generator import ReportGenerator
 
 
 init(autoreset=True)
-
-urllib3.disable_warnings(InsecureRequestWarning)
 
 def main() -> None:
     service = AlertService()
@@ -100,43 +96,10 @@ def main() -> None:
         for finding in open_findings
     )
 
-    print()
-    print(
-        Fore.CYAN
-        + Style.BRIGHT
-        + "============================================================"
-    )
-    print(
-        Fore.CYAN
-        + Style.BRIGHT
-        + "                      ANALYSIS SUMMARY"
-    )
-    print(
-        Fore.CYAN
-        + Style.BRIGHT
-        + "============================================================"
-    )
-    print(
-        Fore.CYAN
-        + f"{'Alerts retrieved':<22}"
-        + Fore.WHITE
-        + Style.BRIGHT
-        + str(len(alerts))
-    )
-    print(
-        Fore.CYAN
-        + f"{'Findings detected':<22}"
-        + Fore.WHITE
-        + Style.BRIGHT
-        + str(len(findings))
-    )
-    print(
-        Fore.CYAN
-        + f"{'Open findings':<22}"
-        + Fore.WHITE
-        + Style.BRIGHT
-        + str(len(open_findings))
-    )
+    print(f"Alerts retrieved: {len(alerts)}")
+    print(f"Findings detected: {len(findings)}")
+    print(f"Open findings: {len(open_findings)}")
+    print(f"Cases detected: {len(cases)}")
 
     print()
     print(
@@ -202,7 +165,7 @@ def main() -> None:
     print(
         Fore.CYAN
         + Style.BRIGHT
-        + f"                 CORRELATED CASES ({len(cases)})"
+        + "                    CORRELATED CASES"
     )
     print(
         Fore.CYAN
@@ -235,11 +198,11 @@ def main() -> None:
         if case.severity.lower() == "critical":
             severity_color = Fore.RED + Style.BRIGHT
         elif case.severity.lower() == "high":
-            severity_color = Fore.RED + Style.BRIGHT
-        elif case.severity.lower() == "medium":
             severity_color = Fore.YELLOW + Style.BRIGHT
+        elif case.severity.lower() == "medium":
+            severity_color = Fore.MAGENTA + Style.BRIGHT
         elif case.severity.lower() == "low":
-            severity_color = Fore.CYAN + Style.BRIGHT
+            severity_color = Fore.GREEN
 
         status_color = Fore.WHITE
 
@@ -350,5 +313,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
 
