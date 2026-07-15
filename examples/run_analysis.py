@@ -5,9 +5,9 @@ Run the SOC analysis engine against real Wazuh alerts.
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 from soc_tool.api.alerts import AlertService
+from soc_tool.correlation.engine import CorrelationEngine
 from soc_tool.detections.account_creation import AccountCreationDetector
 from soc_tool.detections.brute_force import BruteForceDetector
 from soc_tool.detections.engine import AnalysisEngine
@@ -80,6 +80,14 @@ def main() -> None:
 
     open_findings = store.get_open_findings(findings)
 
+    correlation_engine = CorrelationEngine(
+        correlation_window_hours=24
+    )
+
+    cases = correlation_engine.correlate(
+        open_findings
+    )
+
     detection_counts = Counter(
         finding.title
         for finding in open_findings
@@ -88,6 +96,8 @@ def main() -> None:
     print(f"Alerts retrieved: {len(alerts)}")
     print(f"Findings detected: {len(findings)}")
     print(f"Open findings: {len(open_findings)}")
+    print(f"Cases detected: {len(cases)}")
+
     print()
     print("=== ANALYSIS RESULTS ===")
 
@@ -102,6 +112,46 @@ def main() -> None:
     print()
     print(f"Total open findings: {len(open_findings)}")
 
+    print()
+    print("=== CORRELATED CASES ===")
+
+    if not cases:
+        print("No correlated cases detected.")
+
+    for case in cases:
+        print()
+        print(
+            f"{case.case_id} - {case.title}"
+        )
+        print(f"Severity: {case.severity}")
+        print(f"Status: {case.status}")
+        print(
+            f"Related findings: {len(case.findings)}"
+        )
+
+        print()
+        print("Entities:")
+
+        if not case.entities:
+            print("  No entities available.")
+
+        for entity_name, entity_value in case.entities.items():
+            print(
+                f"  {entity_name}: {entity_value}"
+            )
+
+        print()
+        print("Timeline:")
+
+        if not case.timeline:
+            print("  No timeline events available.")
+
+        for event in case.timeline:
+            print(
+                f"  {event['timestamp']} - "
+                f"{event['event']}"
+            )
+
     costa_rica = timezone(
         timedelta(hours=-6),
         name="Costa Rica",
@@ -113,16 +163,21 @@ def main() -> None:
         findings=open_findings,
     )
 
-    output_path = Path("soc_analysis_report.html")
+    output_path = Path(
+        "soc_analysis_report.html"
+    )
 
     generator = ReportGenerator()
-    generator.generate_html(report, output_path)
+    generator.generate_html(
+        report,
+        output_path,
+    )
 
     print()
-    print(f"HTML report generated: {output_path}")
+    print(
+        f"HTML report generated: {output_path}"
+    )
 
 
 if __name__ == "__main__":
     main()
-
-
